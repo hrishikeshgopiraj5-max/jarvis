@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import { executeMeshQuery, getMeshInfo, JARVIS_BASE_PROMPT } from '@/lib/agent-mesh';
+import { executeMeshQuery, getMeshInfo } from '@/lib/agent-mesh';
+import { addMemory, addCommand } from '@/lib/memory';
 
 export async function POST(request: Request) {
   try {
     const { message, conversation, apiKey: clientApiKey } = await request.json();
 
-    // API key: client-side (from Settings) takes priority, then env var
     const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      // Local fallback mode — no API key configured
       const response = generateLocalResponse(message);
       return NextResponse.json({
         response,
@@ -20,7 +19,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // ── Route through the spider-web mesh ──────────────────────
+    // ── Route through the spider-web mesh with RAG + Memory ─────
     const meshResult = await executeMeshQuery({
       apiKey,
       message,
@@ -28,7 +27,32 @@ export async function POST(request: Request) {
         role: m.role,
         content: m.content,
       })),
+      useKnowledge: true,
+      useMemory: true,
     });
+
+    // ── Record in memory system ─────────────────────────────────
+    addMemory({
+      type: 'conversation',
+      content: `User: "${message.substring(0, 200)}" → Intent: ${meshResult.intent}, Strategy: ${meshResult.strategy}, Models: ${meshResult.modelsUsed.join(', ')}`,
+      tags: [meshResult.intent, meshResult.strategy, ...meshResult.knowledgeUsed || []],
+      importance: meshResult.strategy === 'triple' ? 7 : meshResult.strategy === 'dual' ? 5 : 3,
+      context: meshResult.response.substring(0, 300),
+    });
+
+    // Record extracted commands
+    if (meshResult.commands && meshResult.commands.length > 0) {
+      for (const cmd of meshResult.commands.slice(0, 5)) {
+        addCommand({
+          command: cmd,
+          tool: detectTool(cmd),
+          purpose: `Auto-detected from ${meshResult.intent} response`,
+          outcome: 'partial',
+          tags: [meshResult.intent],
+          notes: 'Planned by AI, awaiting execution',
+        });
+      }
+    }
 
     return NextResponse.json({
       response: meshResult.response,
@@ -36,6 +60,8 @@ export async function POST(request: Request) {
       modelsUsed: meshResult.modelsUsed,
       strategy: meshResult.strategy,
       confidence: meshResult.confidence,
+      commands: meshResult.commands || [],
+      knowledgeUsed: meshResult.knowledgeUsed || [],
     });
 
   } catch (error) {
@@ -63,7 +89,24 @@ export async function GET() {
   });
 }
 
-// ── Local fallback responses (when no API key) ───────────────
+function detectTool(cmd: string): string {
+  const lower = cmd.toLowerCase();
+  if (lower.includes('nmap')) return 'nmap';
+  if (lower.includes('sqlmap')) return 'sqlmap';
+  if (lower.includes('hydra')) return 'hydra';
+  if (lower.includes('hashcat')) return 'hashcat';
+  if (lower.includes('john')) return 'john-the-ripper';
+  if (lower.includes('metasploit') || lower.includes('msf')) return 'metasploit';
+  if (lower.includes('aircrack') || lower.includes('airodump') || lower.includes('aireplay')) return 'aircrack-ng';
+  if (lower.includes('burp')) return 'burp-suite';
+  if (lower.includes('bettercap')) return 'bettercap';
+  if (lower.includes('wireshark') || lower.includes('tcpdump')) return 'wireshark';
+  if (lower.includes('python')) return 'python';
+  if (lower.includes('curl')) return 'curl';
+  if (lower.includes('ping')) return 'ping';
+  return 'shell';
+}
+
 function generateLocalResponse(message: string): string {
   const lower = message.toLowerCase();
 
@@ -85,17 +128,6 @@ function generateLocalResponse(message: string): string {
     return `I can assist you with:\n\n- **Information**: Time, date, weather, calculations, general questions\n- **Web**: Search Google, YouTube, Wikipedia; open websites\n- **Productivity**: Create notes, set timers, create reminders\n- **AI**: Answer questions, write code, summarize text, explain concepts\n- **Security**: Ethical hacking knowledge, penetration testing guidance\n- **Voice**: Speak to me using the voice button\n- **System**: Toggle themes, adjust settings\n\n*Configure my OpenRouter API key in Settings to unlock my full neural mesh — 15+ AI models working together for you.*\n\nWhat would you like to do?`;
   }
 
-  if (lower.includes('joke')) {
-    const jokes = [
-      "Why do programmers prefer dark mode? Because light attracts bugs.",
-      "I would tell you a UDP joke, but you might not get it.",
-      "There are 10 types of people in the world: those who understand binary and those who don't.",
-      "A SQL query walks into a bar, sees two tables and asks... Can I join you?",
-      "How many programmers does it take to change a light bulb? None — that's a hardware problem.",
-    ];
-    return jokes[Math.floor(Math.random() * jokes.length)];
-  }
-
   if (lower.includes('time')) {
     return `The current time is ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}, sir.`;
   }
@@ -107,8 +139,8 @@ function generateLocalResponse(message: string): string {
   if (lower.includes('mesh') || lower.includes('model') || lower.includes('agent')) {
     const info = getMeshInfo();
     const providerList = info.providers.join(', ');
-    return `The neural mesh is currently **offline** (no API key configured).\n\nMesh configuration:\n- **Total models**: ${info.totalModels}\n- **Providers**: ${providerList}\n- **Connections**: ${info.totalConnections} node-to-node links\n\nTo activate the full mesh, set your OpenRouter API key in **Settings**.`;
+    return `The neural mesh is currently **offline** (no API key configured).\n\nMesh configuration:\n- **Total models**: ${info.totalModels}\n- **Providers**: ${providerList}\n- **Connections**: ${info.totalConnections} node-to-node links\n- **Knowledge base**: ${info.knowledgeBase.totalEntries} entries, ${info.knowledgeBase.totalCommands} commands\n\nTo activate the full mesh, set your OpenRouter API key in **Settings**.`;
   }
 
-  return `I understand your request: *"${message}"*\n\nI'm currently running in **local mode** — the neural mesh is offline. To unlock my full capabilities with 15+ AI models working together, set your OpenRouter API key in **Settings**.\n\nIn the meantime, I can still help with:\n- Time and date queries\n- Setting timers and reminders\n- Creating and managing notes\n- Web searches\n- Basic calculations\n- Tell jokes 😄\n\nWhat would you like to do?`;
+  return `I understand your request: *"${message}"*\n\nI'm currently running in **local mode** — the neural mesh is offline. To unlock my full capabilities, set your OpenRouter API key.\n\nIn the meantime, I can still help with:\n- Time and date queries\n- Setting timers and reminders\n- Creating and managing notes\n- Basic calculations\n\nWhat would you like to do?`;
 }

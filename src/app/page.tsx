@@ -154,13 +154,13 @@ export default function JarvisPage() {
         role: m.role === 'jarvis' ? 'assistant' : 'user',
         content: m.text,
       })));
-      const reply = result.response || result.error || 'Kuch gadbad ho gayi sir, dubara try karo.';
+      const reply = result.response || result.error || 'Something went wrong, sir. Please try again.';
       setMessages(prev => [...prev, { role: 'jarvis', text: reply, time: now() }]);
       setResponse(reply);
       setResponseTime(Date.now());
       speak(reply);
     } catch {
-      const errorMsg = 'Neural connection toot gaya sir. Dubara try karo.';
+      const errorMsg = 'Neural connection interrupted, sir. Please try again.';
       setMessages(prev => [...prev, { role: 'jarvis', text: errorMsg, time: now() }]);
       setResponse(errorMsg);
       setResponseTime(Date.now());
@@ -317,14 +317,14 @@ export default function JarvisPage() {
 
   // ── Trending Ideas ───────────────────────────────────────────
   const trendingIdeas = [
-    { icon: '🔒', title: 'Cybersecurity Audit', desc: 'Apna network scan karo aur vulnerabilities dhundho', tag: 'HACKING' },
-    { icon: '🤖', title: 'Build an AI Bot', desc: 'Discord/Telegram bot banao multiple AI models se', tag: 'CODING' },
-    { icon: '📊', title: 'Market Analysis', desc: 'Crypto/stocks ka AI se deep research karo', tag: 'ANALYSIS' },
-    { icon: '🎨', title: 'UI/UX Design', desc: 'Ek complete web app design karo scratch se', tag: 'DESIGN' },
-    { icon: '📝', title: 'Pitch Deck', desc: 'Professional investor pitch deck banao', tag: 'BUSINESS' },
-    { icon: '🧠', title: 'Learn Anything', desc: 'Kuch bhi seekho — quantum physics se cooking tak', tag: 'LEARNING' },
-    { icon: '⚡', title: 'Automate Tasks', desc: 'Boring kaam automate karo scripts se', tag: 'AUTOMATION' },
-    { icon: '🎮', title: 'Game Dev', desc: 'Ek game banao concept se playable tak', tag: 'GAMING' },
+    { icon: '🔒', title: 'Network Recon & Audit', desc: 'Scan your network for open ports, services, and vulnerabilities', tag: 'SECURITY' },
+    { icon: '🤖', title: 'Build an AI Agent', desc: 'Create a Discord/Telegram bot powered by multiple AI models', tag: 'CODING' },
+    { icon: '📊', title: 'Deep Research', desc: 'Analyze crypto, stocks, or any topic with AI-powered intelligence', tag: 'ANALYSIS' },
+    { icon: '🎨', title: 'Build a Web App', desc: 'Design and build a complete web application from scratch', tag: 'CREATION' },
+    { icon: '📝', title: 'Professional Pitch Deck', desc: 'Create a compelling investor pitch deck or business proposal', tag: 'BUSINESS' },
+    { icon: '🧠', title: 'Master Any Subject', desc: 'Learn anything — from quantum physics to machine learning', tag: 'LEARNING' },
+    { icon: '⚡', title: 'Automate Everything', desc: 'Write scripts to automate repetitive tasks and workflows', tag: 'AUTOMATION' },
+    { icon: '🎮', title: 'Game Development', desc: 'Build a game from concept to playable — with AI assistance', tag: 'GAMING' },
   ];
 
   return (
@@ -478,25 +478,34 @@ export default function JarvisPage() {
           </button>
           <form onSubmit={handleTextSubmit} className="flex-1 max-w-md">
             <input ref={inputRef} type="text" value={inputText} onChange={e => setInputText(e.target.value)}
-              placeholder='Bolo ya type karo...'
+              placeholder='Type a message or say Hey Jarvis...'
               className="w-full bg-white/[0.04] border border-white/10 rounded-full px-5 py-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500/30 focus:bg-white/[0.06] transition-all"
               disabled={mode === 'thinking'}
               onFocus={handleInputFocus}
               onBlur={handleInputBlur} />
           </form>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all border ${
-            mode === 'listening' ? 'border-green-500/30 bg-green-500/10' :
-            mode === 'thinking' ? 'border-yellow-500/30 bg-yellow-500/10 animate-pulse' :
-            mode === 'speaking' ? 'border-cyan-500/30 bg-cyan-500/10' :
-            'border-white/10 bg-white/[0.03]'
-          }`}>
+          <button onClick={() => {
+            if (mode === 'listening') {
+              if (recognitionRef.current) { recognitionRef.current.abort(); recognitionRef.current = null; }
+              setMode('idle'); setStatus('PAUSED');
+            } else if (mode === 'idle' || mode === 'error') {
+              startListening();
+            }
+          }}
+            title={mode === 'listening' ? 'Click to pause listening' : 'Click to start listening'}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all border cursor-pointer ${
+              mode === 'listening' ? 'border-green-500/30 bg-green-500/10 hover:bg-green-500/20' :
+              mode === 'thinking' ? 'border-yellow-500/30 bg-yellow-500/10 animate-pulse' :
+              mode === 'speaking' ? 'border-cyan-500/30 bg-cyan-500/10' :
+              'border-white/10 bg-white/[0.03] hover:border-cyan-500/30 hover:bg-cyan-500/10'
+            }`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
               className={mode === 'listening' ? 'text-green-400' : mode === 'thinking' ? 'text-yellow-400' : mode === 'speaking' ? 'text-cyan-400' : 'text-slate-500'}>
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
               <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
             </svg>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -551,8 +560,29 @@ export default function JarvisPage() {
                 </div>
                 <div className="text-[10px] text-slate-600 mt-2">182 node-to-node connections · Spider-web orchestration</div>
               </div>
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+                <div className="text-[10px] tracking-[0.3em] text-emerald-400/60 mb-3">KNOWLEDGE BASE & MEMORY</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: 'KNOWLEDGE', value: '14 Entries', icon: '📚' },
+                    { label: 'TOOLS', value: '50+ Commands', icon: '🔧' },
+                    { label: 'CATEGORIES', value: '11 Domains', icon: '🎯' },
+                    { label: 'MEMORY', value: 'Active', icon: '🧠' },
+                  ].map(item => (
+                    <div key={item.label} className="bg-white/[0.02] rounded-lg p-2.5">
+                      <div className="text-[9px] tracking-wider text-slate-500 mb-1">{item.icon} {item.label}</div>
+                      <div className="text-xs text-white font-mono">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {['Recon', 'Web Security', 'Exploitation', 'Passwords', 'Wireless', 'Post-Exploit', 'Forensics', 'Social Eng', 'Crypto'].map(cat => (
+                    <span key={cat} className="px-2 py-0.5 rounded text-[9px] border border-emerald-500/20 bg-emerald-500/5 text-emerald-400/60">{cat}</span>
+                  ))}
+                </div>
+              </div>
               <div>
-                <div className="text-[10px] tracking-[0.3em] text-cyan-400/60 mb-3">AAP AUR JARVIS MILKE KYA KAR SAKTE HO</div>
+                <div className="text-[10px] tracking-[0.3em] text-cyan-400/60 mb-3">WHAT JARVIS CAN DO FOR YOU</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {trendingIdeas.map(idea => (
                     <button key={idea.title}
@@ -599,8 +629,8 @@ export default function JarvisPage() {
               {messages.length === 0 && (
                 <div className="text-center text-slate-600 text-xs mt-12">
                   <div className="text-2xl mb-3 opacity-30">⬡</div>
-                  <p>Jarvis se baat karo.</p>
-                  <p className="mt-1 text-slate-700">&quot;Hey Jarvis, mujhe kuch help chahiye&quot;</p>
+                  <p>Start a conversation with JARVIS.</p>
+                  <p className="mt-1 text-slate-700">Say &quot;Hey Jarvis&quot; or type a message below.</p>
                 </div>
               )}
               {messages.map((msg, i) => (
@@ -632,7 +662,7 @@ export default function JarvisPage() {
             <div className="px-4 py-3 border-t border-white/5">
               <form onSubmit={handleTextSubmit} className="flex gap-2">
                 <input type="text" value={inputText} onChange={e => setInputText(e.target.value)}
-                  placeholder="Ya yahan type karo..."
+                  placeholder="Type a message..."
                   className="flex-1 bg-white/[0.04] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500/30 transition-colors"
                   disabled={mode === 'thinking'}
                   onFocus={handleInputFocus}

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, Tray, Menu, screen } = require('electron');
+const { app, BrowserWindow, globalShortcut, Tray, Menu, screen, session } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -7,7 +7,6 @@ let tray;
 let nextProcess;
 
 const PORT = 3001;
-const isDev = !app.isPackaged;
 
 // ── Start Next.js server ──────────────────────────────────────
 function startNextServer() {
@@ -20,10 +19,8 @@ function startNextServer() {
       stdio: 'ignore',
       detached: true,
     });
-
     nextProcess.unref();
 
-    // Wait for server to be ready
     const check = async () => {
       try {
         await fetch(`http://localhost:${PORT}`);
@@ -45,7 +42,7 @@ function createWindow() {
     height: Math.min(800, height),
     x: Math.floor((width - Math.min(1200, width)) / 2),
     y: Math.floor((height - Math.min(800, height)) / 2),
-    frame: false,           // Frameless — no browser chrome
+    frame: false,
     transparent: false,
     backgroundColor: '#080c14',
     icon: path.join(__dirname, 'icon.png'),
@@ -53,21 +50,37 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
+      // Enable media stream for microphone access
+      webSecurity: false,
+      allowRunningInsecureContent: true,
     },
     titleBarStyle: 'hidden',
     show: false,
     skipTaskbar: false,
   });
 
-  // Load the app
+  // ── Grant microphone permission ──────────────────────────────
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    // Allow all permissions — microphone, camera, etc.
+    const allowedPermissions = ['media', 'microphone', 'audioCapture', 'mediaKeySystem'];
+    if (allowedPermissions.includes(permission)) {
+      callback(true);
+    } else {
+      callback(true); // Allow everything for Jarvis
+    }
+  });
+
+  // Also grant permission check (Electron 12+)
+  session.defaultSession.setPermissionCheckHandler(() => {
+    return true;
+  });
+
   mainWindow.loadURL(`http://localhost:${PORT}`);
 
-  // Show when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
 
-  // Minimize to tray instead of closing
   mainWindow.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault();
@@ -86,12 +99,17 @@ function createWindow() {
   tray.setContextMenu(contextMenu);
   tray.on('click', () => mainWindow.show());
 
-  // ── Window controls via IPC ──────────────────────────────────
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    // Alt+F4 to quit
     if (input.key === 'F4' && input.alt) {
       app.isQuitting = true;
       app.quit();
+    }
+  });
+
+  // ── Log console messages for debugging ───────────────────────
+  mainWindow.webContents.on('console-message', (event, level, message) => {
+    if (message.includes('Voice') || message.includes('Speech') || message.includes('Error') || message.includes('mic')) {
+      console.log(`[JARVIS] ${message}`);
     }
   });
 }
@@ -101,7 +119,6 @@ app.whenReady().then(async () => {
   await startNextServer();
   createWindow();
 
-  // Register global shortcut to toggle window
   globalShortcut.register('CommandOrControl+Shift+J', () => {
     if (mainWindow.isVisible()) {
       mainWindow.hide();
