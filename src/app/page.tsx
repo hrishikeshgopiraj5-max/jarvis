@@ -16,6 +16,8 @@ const MSG_EXPIRY_MS = 12000; // response stays on screen for 12 seconds
 
 export default function JarvisPage() {
   const [mode, setMode] = useState<OrbMode>('idle');
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupKey, setSetupKey] = useState('');
   const [status, setStatus] = useState('INITIALIZING...');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
@@ -38,6 +40,15 @@ export default function JarvisPage() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isProcessingRef = useRef(false);
+
+  // ── Check API key on mount — show setup if missing ───────────
+  useEffect(() => {
+    const settings = localStorage.getItem('jarvis_settings');
+    const parsed = settings ? JSON.parse(settings) : {};
+    if (!parsed.openrouterApiKey) {
+      setSetupOpen(true);
+    }
+  }, []);
   const wakeModeRef = useRef(false);
   const lastSpokeAtRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -229,11 +240,12 @@ export default function JarvisPage() {
     setStatus('LISTENING...');
   }, [processMessage, mode]);
 
-  // ── Start listening on mount ─────────────────────────────────
+  // ── Start listening on mount (only if API key exists) ────────
   useEffect(() => {
+    if (setupOpen) return;
     const timer = setTimeout(() => startListening(), 1500);
     return () => clearTimeout(timer);
-  }, []); // eslint-disable-line
+  }, [setupOpen]); // eslint-disable-line
 
   // ── Pause voice when input is focused ────────────────────────
   const handleInputFocus = useCallback(() => {
@@ -324,6 +336,32 @@ export default function JarvisPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-[600px] h-[600px] rounded-full"
           style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.06) 0%, rgba(99,102,241,0.03) 40%, transparent 70%)' }} />
       </div>
+
+      {/* First-Launch API Key Setup */}
+      <AnimatePresence>
+        {setupOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#0c1018] border border-white/10 rounded-2xl p-8 max-w-md w-[90vw] text-center space-y-5">
+              <div className="text-4xl mb-2">⬡</div>
+              <div className="text-lg text-white font-light">Welcome to JARVIS</div>
+              <div className="text-sm text-slate-400">Enter your OpenRouter API key to activate the neural mesh.</div>
+              <input type="password" value={setupKey} onChange={e => setSetupKey(e.target.value)}
+                placeholder="sk-or-v1-..."
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500/30 transition-all font-mono text-center"
+                onKeyDown={e => { if (e.key === 'Enter' && setupKey.trim()) { localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() })); setSetupOpen(false); } }}
+                autoFocus />
+              <button onClick={() => { if (setupKey.trim()) { localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() })); setSetupOpen(false); } }}
+                disabled={!setupKey.trim()}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 border border-cyan-500/30 text-cyan-400 text-sm font-medium hover:from-cyan-500/30 hover:to-indigo-500/30 disabled:opacity-30 transition-all">
+                Activate JARVIS
+              </button>
+              <div className="text-[10px] text-slate-600">Get your key at <span className="text-cyan-400/60">openrouter.ai</span></div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error Toast */}
       <AnimatePresence>
