@@ -625,6 +625,416 @@ Key artifacts:
     ],
     relatedTools: ['volatility', 'autopsy', 'sleuthkit', 'strings', 'binwalk'],
   },
+  // ── CLOUD SECURITY ──
+  {
+    id: 'aws-security',
+    title: 'AWS Cloud Security Testing',
+    category: 'cloud-security',
+    content: `AWS cloud security testing covers misconfigurations, IAM abuse, and lateral movement in Amazon Web Services.
+
+Recon:
+- enumerate4all: Enumerate AWS account from compromised credentials
+- Pacu: AWS exploitation framework
+- ScoutSuite: Multi-cloud security auditing
+- Prowler: AWS CIS benchmark assessment
+- CloudMapper: Visualize AWS environments
+
+IAM attacks:
+- Create access keys for compromised users
+- Assume roles across accounts (cross-account)
+- PassRole to escalate privileges
+- Create new admin users
+- Lambda function code injection
+
+S3 attacks:
+- List and download public/private buckets
+- Upload malicious objects
+- Modify bucket policies
+- CORS misconfiguration exploitation
+
+Privilege escalation:
+- iam:CreatePolicyVersion (self-escalation)
+- iam:AttachUserPolicy (attach admin)
+- iam:PassRole + lambda:CreateFunction (code exec)
+- iam:PassRole + ec2:RunInstance (metadata exfil)
+- iam:PassRole + glue:CreateDevEndpoint (code exec)
+
+EC2 attacks:
+- User data script extraction
+- Instance metadata service (IMDSv1 SSRF)
+- Security group rule modification
+- Snapshot mounting for disk access
+
+Lateral movement:
+- Cross-account role assumption
+- Resource-based policy exploitation
+- VPC peering abuse
+- DNS rebinding to private services`,
+    tags: ['aws', 'cloud', 'iam', 's3', 'ec2', 'lambda', 'prowler', 'pacu', 'misconfiguration'],
+    commands: [
+      'aws sts get-caller-identity',
+      'aws iam list-attached-user-policies --user-name USER',
+      'aws s3 ls',
+      'aws ec2 describe-instances',
+      'pacu --help',
+      'prowler aws',
+      'scout --provider aws',
+    ],
+    examples: [
+      'Check current identity: aws sts get-caller-identity',
+      'Enumerate S3 buckets: aws s3 ls --recursive s3://bucket-name',
+      'Run Prowler audit: prowler aws --checks iam_root_hardware_mfa_enabled',
+      'Pacu enumeration: pacu --module iam__enum_users --module-args "--roles False"',
+    ],
+    relatedTools: ['pacu', 'prowler', 'scoutsuite', 'enumerate4all', 'cloudmapper'],
+  },
+  {
+    id: 'azure-security',
+    title: 'Azure Cloud Security Testing',
+    category: 'cloud-security',
+    content: `Microsoft Azure cloud security testing.
+
+Tools:
+- ScoutSuite: Azure security auditing
+- ROADtools: Azure AD exploration
+- AADInternals: Azure AD attack toolkit
+- AzureHound: Azure AD data collection for BloodHound
+- MicroBurst: Azure security assessment
+
+Key attacks:
+- Azure AD user enumeration
+- Service principal abuse
+- Managed identity impersonation
+- Key Vault secret extraction
+- Azure RBAC privilege escalation
+- Conditional access policy bypass
+- OAuth application abuse
+- Certificate-based authentication attacks`,
+    tags: ['azure', 'cloud', 'azuread', 'entra', 'keyvault', 'microsoft', 'aadinternals'],
+    commands: [
+      'az login',
+      'az ad user list',
+      'az keyvault secret list --vault-name VAULT',
+      'roadtools auth',
+      'AADInternals',
+    ],
+    examples: [
+      'Enumerate Azure AD: ROADrecon explore',
+      'Dump Key Vault: az keyvault secret list --vault-name myvault',
+    ],
+    relatedTools: ['scoutsuite', 'roadtools', 'aadinternals', 'azurehound'],
+  },
+  {
+    id: 'gcp-security',
+    title: 'Google Cloud Platform Security Testing',
+    category: 'cloud-security',
+    content: `GCP security testing focuses on IAM, compute, storage, and Kubernetes.
+
+Tools:
+- ScoutSuite: GCP security auditing
+- GCPBucketBrute: GCS bucket enumeration
+- GCUDumper: GCP credential extraction
+- Stratus Red Team: GCP attack emulation
+
+Key attacks:
+- Service account key extraction from VMs
+- Metadata server exploitation (169.254.169.254)
+- GCS bucket enumeration and public access
+- IAM privilege escalation via bindings
+- GKE Kubernetes cluster compromise
+- Cloud Functions code injection
+- BigQuery data exfiltration`,
+    tags: ['gcp', 'cloud', 'google', 'gke', 'kubernetes', 'bigquery', 'gcs'],
+    commands: [
+      'gcloud auth list',
+      'gcloud projects list',
+      'gcloud container clusters list',
+      'gsutil ls',
+    ],
+    examples: [
+      'List GCP projects: gcloud projects list',
+      'Enumerate GCS buckets: gsutil ls gs://',
+    ],
+    relatedTools: ['scoutsuite', 'gcpbucketbrute', 'stratus-red-team'],
+  },
+  {
+    id: 'docker-kubernetes-security',
+    title: 'Docker and Kubernetes Security',
+    category: 'cloud-security',
+    content: `Container and orchestration security testing.
+
+Docker attacks:
+- Container escape (CVE-2019-5736, CVE-2020-15257)
+- Privileged container abuse (mount host filesystem)
+- Docker socket exposure (API access)
+- Image poisoning and supply chain attacks
+- Secret extraction from environment variables
+- Runtime manipulation with nsenter
+
+Kubernetes attacks:
+- Kubernetes Dashboard exposure
+- kubelet API abuse (exec into pods)
+- RBAC escalation and role binding
+- etcd data extraction
+- Service account token abuse
+- Pod security policy bypass
+- Persistent backdoor pods
+- Secrets extraction from etcd or API
+
+Tools:
+- kubeaudit: Kubernetes security auditing
+- kube-hunter: Kubernetes penetration testing
+- trivy: Container vulnerability scanning
+- Falco: Runtime security monitoring
+- Peirates: Kubernetes post-exploitation`,
+    tags: ['docker', 'kubernetes', 'k8s', 'container', 'kubelet', 'etcd', 'pod', 'escape'],
+    commands: [
+      'docker run --privileged -it alpine',
+      'docker ps -a',
+      'kubectl get pods --all-namespaces',
+      'kubectl get secrets',
+      'kube-hunter --remote TARGET',
+      'trivy image IMAGE',
+      'kubeaudit all --kubeconfig ~/.kube/config',
+    ],
+    examples: [
+      'Docker escape via privileged: docker run --privileged -v /:/host -it alpine chroot /host',
+      'Kubelet exec: curl -sk -H "Authorization: Bearer TOKEN" https://kubelet:10250/run/default/POD/0/COMMAND',
+      'Extract secrets: kubectl get secrets -o json | jq -r .items[].data',
+    ],
+    relatedTools: ['kube-hunter', 'kubeaudit', 'trivy', 'falco', 'peirates'],
+  },
+  // ── MOBILE SECURITY ──
+  {
+    id: 'android-hacking',
+    title: 'Android Security Testing',
+    category: 'mobile-security',
+    content: `Android penetration testing covers APK analysis, runtime manipulation, and device exploitation.
+
+Static analysis:
+- APKTool: Decompile APK to smali/resources
+- jadx: Java source code decompilation
+- Ghidra/IDA: Native library reverse engineering
+- MobSF: Automated mobile security framework
+- apkx: Extract certificates and permissions
+
+Dynamic analysis:
+- Frida: Dynamic instrumentation toolkit
+- Objection: Runtime exploration powered by Frida
+- Drozer: Android security testing framework
+- Cydia Substrate: Hooking framework
+- Xposed Framework: System-level hooking
+
+Key attacks:
+- Certificate pinning bypass (Frida/Objection)
+- Root detection bypass
+- insecure data storage extraction
+- Intent injection and component export abuse
+- Content provider exploitation
+- WebView JavaScript injection
+- SQL injection in content providers
+- Broadcast receiver hijacking
+- Deep link abuse
+- APK tampering and repackaging
+
+Frida examples:
+- SSL pinning bypass: objection --gadget explore
+- Root bypass: Frida script to hook isRooted()
+- Key extraction: Hook SharedPreferences and KeyStore`,
+    tags: ['android', 'apk', 'frida', 'objection', 'drozer', 'mobile', 'smali', 'hook'],
+    commands: [
+      'jadx -d output app.apk',
+      'apktool d app.apk',
+      'objection --gadget gadget.explore',
+      'frida -U -f com.target.app -l bypass.js --no-pause',
+      'drozer console connect',
+      'mobsfscan app.apk',
+      'adb shell pm list packages',
+      'adb pull /data/data/com.target.app/',
+    ],
+    examples: [
+      'Decompile APK: jadx -d decompiled app.apk',
+      'Frida SSL bypass: frida -U -f com.target.app -l ssl_bypass.js --no-pause',
+      'Dump app data: adb backup -f backup.ab -apk com.target.app',
+      'Objection explore: objection --gadget libfrida-gadget.so explore',
+    ],
+    relatedTools: ['frida', 'objection', 'jadx', 'apktool', 'drozer', 'mobsf'],
+  },
+  {
+    id: 'ios-hacking',
+    title: 'iOS Security Testing',
+    category: 'mobile-security',
+    content: `iOS penetration testing covers app analysis, jailbreak exploitation, and runtime manipulation.
+
+Tools:
+- Frida: Dynamic instrumentation (works on iOS too)
+- Objection: Runtime exploration
+- clutch: Decrypt and dump iOS applications
+- Flexdecrypt: Decrypt iOS binaries
+- class-dump: Extract Objective-C class information
+- keychain_dump: Extract iOS keychain
+- BinaryCookieReader: Parse Safari cookies
+- Ghidra/IDA: Binary analysis
+
+Key attacks:
+- Jailbreak detection bypass (Frida hooks)
+- SSL pinning bypass
+- Keychain data extraction
+- URL scheme hijacking
+- Inter-process communication (IPC) abuse
+- Pasteboard data extraction
+- App Transport Security bypass
+- Core Data injection
+- SQLite database extraction
+- Info.plist sensitive data exposure
+- JSON reverse engineering
+
+Approach:
+1. Decrypt IPA using clutch or flexdecrypt
+2. Analyze with class-dump and Ghidra
+3. Hook functions with Frida at runtime
+4. Bypass security checks (jailbreak, SSL pinning)
+5. Extract sensitive data from keychain and storage`,
+    tags: ['ios', 'iphone', 'frida', 'jailbreak', 'keychain', 'ipa', 'objective-c', 'swift'],
+    commands: [
+      'frida-ps -Uai',
+      'objection --gadget analyze explore',
+      'clutch -d com.target.app',
+      'class-dump Target.app/Target',
+      'keychain_dump',
+      'frida -U -f com.target.app -l ios_bypass.js',
+    ],
+    examples: [
+      'List running apps: frida-ps -Uai',
+      'Decrypt app: clutch -d com.target.app',
+      'Frida jailbreak bypass: frida -U -f com.target.app -l jailbreak_bypass.js --no-pause',
+    ],
+    relatedTools: ['frida', 'objection', 'clutch', 'flexdecrypt', 'class-dump'],
+  },
+  // ── REVERSE ENGINEERING ──
+  {
+    id: 'reverse-engineering',
+    title: 'Reverse Engineering and Binary Analysis',
+    category: 'reverse-engineering',
+    content: `Reverse engineering (RE) decomposes software to understand its internals.
+
+Disassemblers/Decompilers:
+- Ghidra: NSA's free RE suite (disassembly + decompilation)
+- IDA Pro: Industry standard disassembler
+- Binary Ninja: Modern RE platform
+- Radare2/rizin: Open-source RE framework
+- Cutter: GUI for radare2
+
+Dynamic analysis:
+- GDB: GNU debugger (Linux)
+- WinDbg: Windows debugger
+- x64dbg: Windows user-mode debugger
+- lldb: LLVM debugger (macOS/iOS)
+- strace/ltrace: System/library call tracing
+- Process Monitor (ProcMon): Windows file/registry/network monitor
+
+Binary format analysis:
+- PE files: Windows executables (PE header, imports, sections)
+- ELF files: Linux executables
+- Mach-O: macOS executables
+- APK/IPA: Mobile app packages (zip-based)
+
+Key techniques:
+- Function identification and naming
+- Control flow graph analysis
+- String extraction and cross-references
+- Import/export table analysis
+- Patching and binary modification
+- Anti-analysis detection (VM, debugger, unpacking)
+- Cryptographic algorithm identification
+- Protocol reverse engineering
+- Malware analysis workflow
+
+Workflow:
+1. Run file, strings, and basic recon
+2. Load into disassembler
+3. Identify main function and key data structures
+4. Trace execution flow dynamically
+5. Document findings and rename functions
+6. Patch or recreate functionality`,
+    tags: ['reverse', 'engineering', 'ghidra', 'ida', 'debug', 'binary', 'disassemble', 'malware', 'analyze'],
+    commands: [
+      'ghidra HEADLESS project_dir script_dir',
+      'r2 -A binary',
+      'strings binary | grep -i password',
+      'objdump -d binary',
+      'readelf -a binary',
+      'gdb ./binary',
+      'ltrace ./binary',
+      'strace ./binary',
+      'file binary',
+      'binwalk -e firmware.bin',
+    ],
+    examples: [
+      'Quick recon: file binary && strings binary | head -50 && objdump -d binary | head -100',
+      'Ghidra headless analysis: analyzeHeadless /project /ghidra_project -import binary -postScript AnalyzeScript.java',
+      'Radare2 analysis: r2 -A -c "aaa; afl; pdf @main" binary',
+      'Firmware extraction: binwalk -e firmware.bin',
+      'GDB analysis: gdb -q ./binary -ex "break main" -ex "run" -ex "disassemble main"',
+    ],
+    relatedTools: ['ghidra', 'ida', 'radare2', 'gdb', 'x64dbg', 'cutter', 'binwalk'],
+  },
+  {
+    id: 'malware-analysis',
+    title: 'Malware Analysis and Reverse Engineering',
+    category: 'reverse-engineering',
+    content: `Malware analysis combines static and dynamic techniques to understand malicious software.
+
+Static analysis:
+- YARA rules: Pattern matching for malware classification
+- PEStudio: Quick static analysis of PE files
+- FLOSS: Extract obfuscated strings
+- Detect It Easy (DIE): Identify compiler, packer, crypto
+- ExeInfo PE: PE information and unpacking hints
+- PE-bear: PE file viewer/editor
+
+Dynamic analysis:
+- Cuckoo Sandbox: Automated malware analysis
+- ANY.RUN: Interactive online sandbox
+- REMnux: Linux malware analysis distro
+- FlareVM: Windows malware analysis VM
+- Process Monitor: File/registry/process monitoring
+- Process Hacker: Advanced process analysis
+- Wireshark: Network traffic capture
+- FakeNet-NG: Network simulation for analysis
+
+Unpacking:
+- UPX: Universal unpacker
+- ESET Unpacker
+- Generic unpacking with debugger breakpoints
+- Custom scripts for custom packers
+
+Workflow:
+1. Create isolated analysis VM (no internet)
+2. Run static recon (file, strings, DIE, PEStudio)
+3. Identify packer/obfuscation -> unpack if needed
+4. Run in sandbox, capture network/process behavior
+5. Analyze with debugger if needed
+6. Extract IOCs (domains, IPs, file hashes, mutexes)
+7. Write YARA rules for detection`,
+    tags: ['malware', 'yara', 'cuckoo', 'sandbox', 'unpack', 'analysis', 'virus', 'trojan', 'obfuscate'],
+    commands: [
+      'yara -r rules.yar target.exe',
+      'floss target.exe',
+      'upx -d packed.exe',
+      'strings -a target.exe | grep -E "(http|\\.exe|\\.dll)"',
+      'cuckoo submit target.exe',
+      'capa target.exe',
+    ],
+    examples: [
+      'Quick static: file target.exe && strings -a target.exe | head -100',
+      'Unpack UPX: upx -d packed.exe',
+      'YARA scan: yara -r malware_rules.yar /path/to/samples/',
+      'Capability detection: capa target.exe',
+      'FLOSS strings: floss target.exe',
+    ],
+    relatedTools: ['yara', 'cuckoo', 'floss', 'pestudio', 'flarevm', 'remnux', 'capa'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════

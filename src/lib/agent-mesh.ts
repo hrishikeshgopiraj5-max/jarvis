@@ -14,6 +14,7 @@
 
 import { searchKnowledge, formatForPrompt, getKnowledgeStats } from './knowledge-base';
 import { searchMemories, getCommandHistory, formatMemoriesForPrompt, formatCommandsForPrompt } from './memory';
+import { formatPlaybooksForPrompt, getSmartSuggestions, suggestNextSteps } from './self-learning';
 
 // ═══════════════════════════════════════════════════════════════
 // MODEL REGISTRY — Your full OpenRouter arsenal, organized by strength
@@ -511,11 +512,15 @@ export async function executeMeshQuery(req: MeshRequest): Promise<MeshResponse> 
     memoryContext = formatMemoriesForPrompt(memories) + formatCommandsForPrompt(recentCommands);
   }
 
+  // ── Playbooks: learned attack chains ─────────────────────
+  const playbookContext = formatPlaybooksForPrompt();
+
   // Build system prompt with all augmentation
   const systemContent = JARVIS_BASE_PROMPT
     + (INTENT_BOOSTERS[selection.intent] || '')
     + knowledgeContext
-    + memoryContext;
+    + memoryContext
+    + playbookContext;
 
   // ── STRATEGY: Single ─────────────────────────────────────
   if (selection.strategy === 'single') {

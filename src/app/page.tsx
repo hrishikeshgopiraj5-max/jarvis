@@ -14,10 +14,25 @@ type OrbMode = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
 const WAKE_WORDS = ['hey jarvis', 'jarvis', 'hey jervis', 'jervis'];
 const MSG_EXPIRY_MS = 12000; // response stays on screen for 12 seconds
 
+const BOOT_SEQUENCE = [
+  { text: 'J.A.R.V.I.S. v3.0 — Neural Mesh Initialization', delay: 400 },
+  { text: 'Loading 14 AI models across 6 providers...', delay: 600 },
+  { text: 'Connecting to spider-web mesh... 182 node links active', delay: 500 },
+  { text: 'Initializing RAG knowledge base... 20+ entries loaded', delay: 400 },
+  { text: 'Memory system online... learning enabled', delay: 350 },
+  { text: 'Voice recognition: ALWAYS-ON mode activated', delay: 400 },
+  { text: 'All systems nominal. Ready for your command, sir.', delay: 500 },
+];
+
 export default function JarvisPage() {
   const [mode, setMode] = useState<OrbMode>('idle');
+  const [booting, setBooting] = useState(true);
+  const [bootLines, setBootLines] = useState<string[]>([]);
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupKey, setSetupKey] = useState('');
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [terminalLines, setTerminalLines] = useState<{ type: 'cmd' | 'out' | 'err' | 'info'; text: string }[]>([]);
+  const [learningStats, setLearningStats] = useState({ patternsLearned: 0, successRate: 0 });
   const [status, setStatus] = useState('INITIALIZING...');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
@@ -40,6 +55,27 @@ export default function JarvisPage() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isProcessingRef = useRef(false);
+
+  // ── Boot Sequence ─────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    let lineIdx = 0;
+    const runBoot = async () => {
+      setBooting(true);
+      setBootLines([]);
+      for (const line of BOOT_SEQUENCE) {
+        if (cancelled) return;
+        await new Promise(r => setTimeout(r, line.delay));
+        setBootLines(prev => [...prev, line.text]);
+      }
+      if (!cancelled) {
+        await new Promise(r => setTimeout(r, 800));
+        setBooting(false);
+      }
+    };
+    runBoot();
+    return () => { cancelled = true; };
+  }, []);
 
   // ── Check API key on mount — show setup if missing ───────────
   useEffect(() => {
@@ -143,7 +179,7 @@ export default function JarvisPage() {
     isProcessingRef.current = true;
     wakeModeRef.current = false;
     setMode('thinking');
-    setStatus('SOCH RAHA HU...');
+    setStatus('ANALYZING...');
     setTranscript('');
     setMessages(prev => [...prev, { role: 'user', text, time: now() }]);
 
@@ -158,6 +194,14 @@ export default function JarvisPage() {
       setMessages(prev => [...prev, { role: 'jarvis', text: reply, time: now() }]);
       setResponse(reply);
       setResponseTime(Date.now());
+      // Feed commands into terminal
+      if ((result as any).commands && (result as any).commands.length > 0) {
+        setTerminalLines(prev => [
+          ...prev,
+          { type: 'info', text: `[${new Date().toLocaleTimeString()}] Commands detected:` },
+          ...(result as any).commands.map((cmd: string) => ({ type: 'out' as const, text: cmd })),
+        ]);
+      }
       speak(reply);
     } catch {
       const errorMsg = 'Neural connection interrupted, sir. Please try again.';
@@ -173,7 +217,7 @@ export default function JarvisPage() {
   // ── Always-On Wake Word Listener ──────────────────────────────
   const startListening = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setStatus('Voice not supported'); return; }
+    if (!SR) {    setStatus('VOICE NOT SUPPORTED'); return; }
     if (recognitionRef.current || isProcessingRef.current || mode === 'speaking') return;
 
     const recognition = new SR();
@@ -200,8 +244,8 @@ export default function JarvisPage() {
         if (hasWakeWord && !wakeModeRef.current) {
           setWakeDetected(true);
           wakeModeRef.current = true;
-          setMode('listening');
-          setStatus('BOLIYE SIR...');
+    setMode('listening');
+    setStatus('LISTENING...');
           setTranscript('');
           // Play a subtle beep to confirm wake word
           try { const ctx = new AudioContext(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 880; gain.gain.value = 0.1; osc.start(); osc.stop(ctx.currentTime + 0.1); } catch {}
@@ -331,6 +375,42 @@ export default function JarvisPage() {
     <div className="fixed inset-0 flex flex-col items-center justify-between overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #080c14 0%, #0a1020 40%, #0c1428 100%)' }}>
 
+      {/* Boot Sequence */}
+      <AnimatePresence>
+        {booting && (
+          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#080c14]">
+            <div className="max-w-lg w-full px-8 space-y-1">
+              {/* JARVIS logo */}
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                className="text-center mb-8">
+                <div className="text-5xl mb-3">⬡</div>
+                <div className="text-xl tracking-[0.4em] text-cyan-400/80 font-light">J.A.R.V.I.S.</div>
+                <div className="text-[10px] tracking-[0.3em] text-slate-600 mt-2">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+              </motion.div>
+              {/* Boot lines */}
+              <div className="space-y-1.5">
+                {bootLines.map((line, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 text-[11px] font-mono">
+                    <span className="text-cyan-500/60">{`>`}</span>
+                    <span className="text-slate-400">{line}</span>
+                    <span className="text-emerald-400 ml-auto">OK</span>
+                  </motion.div>
+                ))}
+              </div>
+              {/* Progress bar */}
+              <div className="mt-6 h-[2px] bg-white/5 rounded-full overflow-hidden">
+                <motion.div initial={{ width: '0%' }}
+                  animate={{ width: `${(bootLines.length / BOOT_SEQUENCE.length) * 100}%` }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-[600px] h-[600px] rounded-full"
@@ -384,6 +464,10 @@ export default function JarvisPage() {
             'bg-slate-600'
           }`} />
           <div className="text-[10px] tracking-wider text-slate-600 font-mono">{pcHealth.time}</div>
+          <button onClick={() => setTerminalOpen(!terminalOpen)}
+            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all text-xs font-mono">
+            {'>'}
+          </button>
           <button onClick={() => setInfoOpen(!infoOpen)}
             className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-xs">
             i
@@ -603,6 +687,59 @@ export default function JarvisPage() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Terminal View */}
+      <AnimatePresence>
+        {terminalOpen && (
+          <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="absolute bottom-0 left-0 right-0 h-[45vh] bg-[#0a0e14]/95 backdrop-blur-xl border-t border-emerald-500/20 flex flex-col z-50">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-emerald-500/10">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                <span className="text-[10px] tracking-wider text-emerald-500/60 ml-2">TERMINAL</span>
+              </div>
+              <button onClick={() => setTerminalOpen(false)}
+                className="text-[10px] text-slate-600 hover:text-white transition-colors">CLOSE</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-1">
+              {terminalLines.length === 0 && (
+                <div className="text-slate-700 text-center mt-12">
+                  Terminal output will appear here when commands are executed.
+                </div>
+              )}
+              {terminalLines.map((line, i) => (
+                <div key={i} className={`flex items-start gap-2 ${
+                  line.type === 'cmd' ? 'text-emerald-400' :
+                  line.type === 'err' ? 'text-red-400' :
+                  line.type === 'info' ? 'text-cyan-400/60' :
+                  'text-slate-400'
+                }`}>
+                  {line.type === 'cmd' && <span className="text-emerald-600">$</span>}
+                  <span className="whitespace-pre-wrap break-all">{line.text}</span>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 py-2 border-t border-emerald-500/10">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const input = (e.target as any).elements.cmd;
+                if (input.value.trim()) {
+                  setTerminalLines(prev => [...prev, { type: 'cmd', text: input.value }]);
+                  processMessage(input.value);
+                  input.value = '';
+                }
+              }} className="flex gap-2">
+                <input name="cmd" type="text" placeholder="Type a command..."
+                  className="flex-1 bg-transparent border-none outline-none text-emerald-400 font-mono text-[11px] placeholder-slate-700"
+                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+              </form>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

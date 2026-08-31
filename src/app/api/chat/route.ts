@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { executeMeshQuery, getMeshInfo } from '@/lib/agent-mesh';
 import { addMemory, addCommand } from '@/lib/memory';
+import { learnFromCommand, learnFromChain, getSmartSuggestions, suggestNextSteps, getLearningStats } from '@/lib/self-learning';
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +55,10 @@ export async function POST(request: Request) {
       }
     }
 
+    // Generate smart suggestions based on response
+    const suggestions = getSmartSuggestions(message);
+    const learningStats = getLearningStats();
+
     return NextResponse.json({
       response: meshResult.response,
       intent: meshResult.intent,
@@ -62,6 +67,11 @@ export async function POST(request: Request) {
       confidence: meshResult.confidence,
       commands: meshResult.commands || [],
       knowledgeUsed: meshResult.knowledgeUsed || [],
+      suggestions,
+      learningStats: {
+        patternsLearned: learningStats.playbookCount,
+        successRate: Math.round(learningStats.successRate * 100),
+      },
     });
 
   } catch (error) {
