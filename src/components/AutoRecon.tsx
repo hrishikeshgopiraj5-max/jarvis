@@ -80,6 +80,8 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
   const [error, setError] = useState('');
   const [expandedFinding, setExpandedFinding] = useState<number | null>(null);
   const [filter, setFilter] = useState<string>('all');
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportResult, setReportResult] = useState<any>(null);
 
   const startRecon = useCallback(async () => {
     if (!target.trim() || scanning) return;
@@ -234,6 +236,25 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                   >
                     NEW TARGET
                   </button>
+                  <button
+                    onClick={async () => {
+                      setGeneratingReport(true);
+                      try {
+                        const res = await fetch('/api/report', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ reconResult: result }),
+                        });
+                        const data = await res.json();
+                        setReportResult(data);
+                      } catch {}
+                      setGeneratingReport(false);
+                    }}
+                    disabled={generatingReport}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-all"
+                  >
+                    {generatingReport ? 'GENERATING...' : '📄 GENERATE REPORT'}
+                  </button>
                 </div>
 
                 {/* Severity counts */}
@@ -363,6 +384,70 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Generated Reports */}
+              {reportResult && (
+                <div className="bg-white/[0.02] border border-emerald-500/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[10px] tracking-wider text-emerald-400/60">📄 BUG BOUNTY REPORTS ({reportResult.totalReports})</div>
+                    <button
+                      onClick={() => {
+                        const blob = new Blob([reportResult.summary], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `jarvis-report-${result.target}.txt`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                    >
+                      ⬇ DOWNLOAD ALL
+                    </button>
+                  </div>
+
+                  <div className="text-xs text-slate-400 mb-3 bg-emerald-500/5 rounded-lg px-3 py-2 whitespace-pre-wrap font-mono text-[10px] max-h-40 overflow-y-auto">
+                    {reportResult.summary}
+                  </div>
+
+                  <div className="space-y-3">
+                    {reportResult.reports.map((report: any) => (
+                      <details key={report.id} className="bg-white/[0.02] border border-white/[0.06] rounded-lg group">
+                        <summary className="px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-white/[0.02]">
+                          <span className={`w-2 h-2 rounded-full ${
+                            report.severity === 'critical' ? 'bg-red-400' :
+                            report.severity === 'high' ? 'bg-orange-400' :
+                            report.severity === 'medium' ? 'bg-yellow-400' :
+                            'bg-blue-400'
+                          }`} />
+                          <span className="text-xs text-white flex-1">{report.title}</span>
+                          <span className="text-[9px] text-slate-500">CVSS {report.cvssScore}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const blob = new Blob([report.markdown], { type: 'text/markdown' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${report.id}-${report.title.substring(0, 30).replace(/\s+/g, '-')}.md`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="px-2 py-0.5 rounded bg-emerald-500/10 text-[9px] text-emerald-400 hover:bg-emerald-500/20"
+                          >
+                            ⬇
+                          </button>
+                        </summary>
+                        <div className="px-3 pb-3 space-y-3">
+                          <div className="text-[11px] text-slate-400 whitespace-pre-wrap font-mono">
+                            {report.plainText}
+                          </div>
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
