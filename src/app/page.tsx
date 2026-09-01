@@ -7,23 +7,23 @@ import AutoRecon from '@/components/AutoRecon';
 import HardwareDesigner from '@/components/HardwareDesigner';
 
 // ═══════════════════════════════════════════════════════════════
-// JARVIS v2 — Always listening. Responds on "Hey Jarvis".
-// Improvements: persistent responses, timestamps, keyboard shortcuts,
-// better orb, error toasts, optimized rendering.
+// JARVIS v3 — IRON MAN HUD INTERFACE
 // ═══════════════════════════════════════════════════════════════
 
 type OrbMode = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
 const WAKE_WORDS = ['hey jarvis', 'jarvis', 'hey jervis', 'jervis'];
-const MSG_EXPIRY_MS = 12000; // response stays on screen for 12 seconds
+const MSG_EXPIRY_MS = 15000;
 
 const BOOT_SEQUENCE = [
-  { text: 'J.A.R.V.I.S. v3.0 — Neural Mesh Initialization', delay: 400 },
-  { text: 'Loading 14 AI models across 6 providers...', delay: 600 },
-  { text: 'Connecting to spider-web mesh... 182 node links active', delay: 500 },
-  { text: 'Initializing RAG knowledge base... 20+ entries loaded', delay: 400 },
-  { text: 'Memory system online... learning enabled', delay: 350 },
-  { text: 'Voice recognition: ALWAYS-ON mode activated', delay: 400 },
-  { text: 'All systems nominal. Ready for your command, sir.', delay: 500 },
+  { text: 'STARK INDUSTRIES // NEURAL MESH INITIALIZATION', delay: 300 },
+  { text: 'ARK REACTOR POWER CORE ................ ONLINE', delay: 400 },
+  { text: 'LOADING 14 AI MODELS ACROSS 6 PROVIDERS', delay: 350 },
+  { text: 'SPIDER-WEB MESH ................. 182 NODES ACTIVE', delay: 300 },
+  { text: 'KNOWLEDGE BASE ..................... 20+ ENTRIES', delay: 250 },
+  { text: 'MEMORY SUBSYSTEM ................... RECORDING', delay: 250 },
+  { text: 'VOICE RECOGNITION ........... ALWAYS-ON MODE', delay: 300 },
+  { text: 'SECURITY PROTOCOLS ............. ARMED', delay: 250 },
+  { text: 'ALL SYSTEMS NOMINAL. READY, SIR.', delay: 400 },
 ];
 
 export default function JarvisPage() {
@@ -34,7 +34,6 @@ export default function JarvisPage() {
   const [setupKey, setSetupKey] = useState('');
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [terminalLines, setTerminalLines] = useState<{ type: 'cmd' | 'out' | 'err' | 'info'; text: string }[]>([]);
-  const [learningStats, setLearningStats] = useState({ patternsLearned: 0, successRate: 0 });
   const [status, setStatus] = useState('INITIALIZING...');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
@@ -46,9 +45,9 @@ export default function JarvisPage() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [wakeDetected, setWakeDetected] = useState(false);
   const [error, setError] = useState('');
-  const [orbPulse, setOrbPulse] = useState(0);
   const [reconOpen, setReconOpen] = useState(false);
   const [hardwareOpen, setHardwareOpen] = useState(false);
+  const [showHUD, setShowHUD] = useState(true);
 
   const [pcHealth, setPcHealth] = useState({
     cores: 0, memory: '', platform: '', language: '',
@@ -59,11 +58,13 @@ export default function JarvisPage() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isProcessingRef = useRef(false);
+  const wakeModeRef = useRef(false);
+  const lastSpokeAtRef = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // ── Boot Sequence ─────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-    let lineIdx = 0;
     const runBoot = async () => {
       setBooting(true);
       setBootLines([]);
@@ -73,7 +74,7 @@ export default function JarvisPage() {
         setBootLines(prev => [...prev, line.text]);
       }
       if (!cancelled) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 600));
         setBooting(false);
       }
     };
@@ -81,23 +82,18 @@ export default function JarvisPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Check API key on mount — show setup if missing ───────────
+  // ── Check API key ──────────────────────────────────────────
   useEffect(() => {
     const settings = localStorage.getItem('jarvis_settings');
     const parsed = settings ? JSON.parse(settings) : {};
-    if (!parsed.openrouterApiKey) {
-      setSetupOpen(true);
-    }
+    if (!parsed.openrouterApiKey) setSetupOpen(true);
   }, []);
-  const wakeModeRef = useRef(false);
-  const lastSpokeAtRef = useRef(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // ── Helpers ──────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────
   const now = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   const showError = (msg: string) => { setError(msg); setTimeout(() => setError(''), 5000); };
 
-  // ── PC Health + Clock ────────────────────────────────────────
+  // ── PC Health + Clock ──────────────────────────────────────
   useEffect(() => {
     const update = () => {
       const d = new Date();
@@ -107,8 +103,8 @@ export default function JarvisPage() {
         platform: navigator.platform || 'Unknown',
         language: navigator.language || 'en-US',
         online: navigator.onLine,
-        time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
-        date: d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+        time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+        date: d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }),
         uptime: `${Math.floor(performance.now() / 60000)}m ${Math.floor((performance.now() % 60000) / 1000)}s`,
       });
     };
@@ -117,35 +113,19 @@ export default function JarvisPage() {
     return () => clearInterval(i);
   }, []);
 
-  // ── Orb pulse animation ──────────────────────────────────────
-  useEffect(() => {
-    if (mode === 'listening') {
-      const i = setInterval(() => setOrbPulse(p => (p + 1) % 360), 50);
-      return () => clearInterval(i);
-    }
-  }, [mode]);
-
-  // ── Keyboard shortcuts ───────────────────────────────────────
+  // ── Keyboard shortcuts ─────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Escape closes panels
       if (e.key === 'Escape') {
         if (infoOpen) setInfoOpen(false);
         else if (chatOpen) setChatOpen(false);
-      }
-      // Focus input on any letter key when not in input
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-          inputRef.current?.focus();
-        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [infoOpen, chatOpen]);
 
-  // ── Speech Synthesis ──────────────────────────────────────────
+  // ── Speech Synthesis ───────────────────────────────────────
   useEffect(() => {
     if (typeof window !== 'undefined') synthRef.current = window.speechSynthesis;
   }, []);
@@ -157,7 +137,6 @@ export default function JarvisPage() {
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.rate = 1.05;
     utterance.pitch = 0.95;
-    // Try to pick a male voice
     const voices = synthRef.current.getVoices();
     const maleVoice = voices.find(v => /david|mark|daniel|male|google uk english male/i.test(v.name));
     if (maleVoice) utterance.voice = maleVoice;
@@ -177,7 +156,7 @@ export default function JarvisPage() {
     synthRef.current.speak(utterance);
   }, []);
 
-  // ── Process Message Through Mesh ─────────────────────────────
+  // ── Process Message ────────────────────────────────────────
   const processMessage = useCallback(async (text: string) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -188,18 +167,15 @@ export default function JarvisPage() {
     setMessages(prev => [...prev, { role: 'user', text, time: now() }]);
 
     try {
-      const settingsRaw = localStorage.getItem('jarvis_settings');
-      const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
       const result = await sendChatMessage(text, messages.map(m => ({
         role: m.role === 'jarvis' ? 'assistant' : 'user',
         content: m.text,
       })));
-      const reply = result.response || result.error || 'Something went wrong, sir. Please try again.';
+      const reply = result.response || result.error || 'Something went wrong, sir.';
       setMessages(prev => [...prev, { role: 'jarvis', text: reply, time: now() }]);
       setResponse(reply);
       setResponseTime(Date.now());
-      // Feed commands into terminal
-      if ((result as any).commands && (result as any).commands.length > 0) {
+      if ((result as any).commands?.length > 0) {
         setTerminalLines(prev => [
           ...prev,
           { type: 'info', text: `[${new Date().toLocaleTimeString()}] Commands detected:` },
@@ -208,20 +184,20 @@ export default function JarvisPage() {
       }
       speak(reply);
     } catch {
-      const errorMsg = 'Neural connection interrupted, sir. Please try again.';
+      const errorMsg = 'Neural connection interrupted, sir.';
       setMessages(prev => [...prev, { role: 'jarvis', text: errorMsg, time: now() }]);
       setResponse(errorMsg);
       setResponseTime(Date.now());
-      showError('API connection failed');
+      showError('Connection failed');
       speak(errorMsg);
     }
     isProcessingRef.current = false;
   }, [messages, speak]);
 
-  // ── Always-On Wake Word Listener ──────────────────────────────
+  // ── Always-On Wake Word Listener ────────────────────────────
   const startListening = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {    setStatus('VOICE NOT SUPPORTED'); return; }
+    if (!SR) { setStatus('VOICE NOT SUPPORTED'); return; }
     if (recognitionRef.current || isProcessingRef.current || mode === 'speaking') return;
 
     const recognition = new SR();
@@ -231,7 +207,6 @@ export default function JarvisPage() {
 
     recognition.onresult = (event: any) => {
       if (Date.now() - lastSpokeAtRef.current < 2000) return;
-
       let finalText = '';
       let interimText = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -239,27 +214,31 @@ export default function JarvisPage() {
         if (event.results[i].isFinal) finalText += t;
         else interimText += t;
       }
-
       if (interimText && !wakeModeRef.current) setTranscript(interimText);
-
       if (finalText) {
         const hasWakeWord = WAKE_WORDS.some(w => finalText.includes(w));
-
         if (hasWakeWord && !wakeModeRef.current) {
           setWakeDetected(true);
           wakeModeRef.current = true;
-    setMode('listening');
-    setStatus('LISTENING...');
+          setMode('listening');
+          setStatus('LISTENING...');
           setTranscript('');
-          // Play a subtle beep to confirm wake word
-          try { const ctx = new AudioContext(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 880; gain.gain.value = 0.1; osc.start(); osc.stop(ctx.currentTime + 0.1); } catch {}
-
+          try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            gain.gain.value = 0.08;
+            osc.start();
+            osc.stop(ctx.currentTime + 0.08);
+          } catch {}
           let command = finalText;
           for (const w of WAKE_WORDS) command = command.replace(new RegExp(w, 'gi'), '').trim();
           if (command.length > 3) processMessage(command);
           return;
         }
-
         if (wakeModeRef.current) {
           wakeModeRef.current = false;
           setWakeDetected(false);
@@ -274,42 +253,31 @@ export default function JarvisPage() {
         setTimeout(() => startListening(), 300);
       }
     };
-
     recognition.onerror = (e: any) => {
       recognitionRef.current = null;
       if (e.error !== 'aborted' && e.error !== 'no-speech' && mode !== 'speaking') {
         setTimeout(() => startListening(), 500);
       }
     };
-
     recognitionRef.current = recognition;
     recognition.start();
     setMode('listening');
     setStatus('LISTENING...');
   }, [processMessage, mode]);
 
-  // ── Start listening on mount (only if API key exists) ────────
   useEffect(() => {
     if (setupOpen) return;
     const timer = setTimeout(() => startListening(), 1500);
     return () => clearTimeout(timer);
-  }, [setupOpen]); // eslint-disable-line
+  }, [setupOpen]);
 
-  // ── Pause voice when input is focused ────────────────────────
   const handleInputFocus = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
-      recognitionRef.current = null;
-    }
+    if (recognitionRef.current) { recognitionRef.current.abort(); recognitionRef.current = null; }
   }, []);
-
   const handleInputBlur = useCallback(() => {
-    if (!isProcessingRef.current && mode !== 'speaking') {
-      setTimeout(() => startListening(), 300);
-    }
+    if (!isProcessingRef.current && mode !== 'speaking') setTimeout(() => startListening(), 300);
   }, [mode]);
 
-  // ── Text Input ───────────────────────────────────────────────
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || isProcessingRef.current) return;
@@ -318,274 +286,499 @@ export default function JarvisPage() {
     setInputText('');
   };
 
-  // ── Auto-scroll chat ─────────────────────────────────────────
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  // ── Waveform (optimized with useMemo) ────────────────────────
-  const waveBars = 48;
-  const [waveLevels, setWaveLevels] = useState<number[]>(new Array(waveBars).fill(0.05));
+  // ── Waveform ───────────────────────────────────────────────
+  const waveBars = 64;
+  const [waveLevels, setWaveLevels] = useState<number[]>(new Array(waveBars).fill(0.03));
 
   useEffect(() => {
     const interval = setInterval(() => {
       setWaveLevels(prev => prev.map((_, i) => {
         if (mode === 'listening' || mode === 'speaking') {
-          return 0.15 + Math.abs(Math.sin(Date.now() / 200 + i * 0.4)) * audioLevel * 0.8;
+          return 0.08 + Math.abs(Math.sin(Date.now() / 180 + i * 0.35)) * audioLevel * 0.7;
         }
-        return 0.04 + Math.sin(Date.now() / 1500 + i * 0.3) * 0.02;
+        return 0.02 + Math.sin(Date.now() / 2000 + i * 0.25) * 0.015;
       }));
-    }, 60); // Reduced from 50ms to 60ms for performance
+    }, 50);
     return () => clearInterval(interval);
   }, [mode, audioLevel]);
 
   useEffect(() => {
     if (mode === 'listening') {
-      const i = setInterval(() => setAudioLevel(0.15 + Math.random() * 0.3), 100);
+      const i = setInterval(() => setAudioLevel(0.2 + Math.random() * 0.35), 80);
       return () => clearInterval(i);
     }
   }, [mode]);
 
-  // ── Orb glow intensity (memoized) ────────────────────────────
-  const orbGlow = useMemo(() => {
-    switch (mode) {
-      case 'listening': return 'bg-cyan-500/12';
-      case 'thinking': return 'bg-indigo-500/18';
-      case 'speaking': return 'bg-cyan-400/15';
-      default: return 'bg-cyan-500/5';
-    }
-  }, [mode]);
+  // ── Data stream columns (background — client-only) ─────────
+  const [dataColumns, setDataColumns] = useState<Array<{left: string; duration: number; delay: number; chars: string}>>([]);
+  useEffect(() => {
+    setDataColumns(Array.from({ length: 12 }, (_, i) => ({
+      left: `${(i / 12) * 100}%`,
+      duration: 15 + Math.random() * 20,
+      delay: Math.random() * 10,
+      chars: Array.from({ length: 40 }, () =>
+        Math.random() > 0.5
+          ? String.fromCharCode(0x30 + Math.floor(Math.random() * 10))
+          : String.fromCharCode(0x41 + Math.floor(Math.random() * 6))
+      ).join(' '),
+    })));
+  }, []);
 
-  const orbGlowSize = useMemo(() => {
-    switch (mode) {
-      case 'listening': return '-inset-20';
-      case 'thinking': return '-inset-16';
-      case 'speaking': return '-inset-20';
-      default: return '-inset-16';
-    }
-  }, [mode]);
-
-  // ── Trending Ideas ───────────────────────────────────────────
+  // ── Trending Ideas (no emojis) ─────────────────────────────
   const trendingIdeas = [
-    { icon: '🔒', title: 'Network Recon & Audit', desc: 'Scan your network for open ports, services, and vulnerabilities', tag: 'SECURITY' },
-    { icon: '🤖', title: 'Build an AI Agent', desc: 'Create a Discord/Telegram bot powered by multiple AI models', tag: 'CODING' },
-    { icon: '📊', title: 'Deep Research', desc: 'Analyze crypto, stocks, or any topic with AI-powered intelligence', tag: 'ANALYSIS' },
-    { icon: '🎨', title: 'Build a Web App', desc: 'Design and build a complete web application from scratch', tag: 'CREATION' },
-    { icon: '📝', title: 'Professional Pitch Deck', desc: 'Create a compelling investor pitch deck or business proposal', tag: 'BUSINESS' },
-    { icon: '🧠', title: 'Master Any Subject', desc: 'Learn anything — from quantum physics to machine learning', tag: 'LEARNING' },
-    { icon: '⚡', title: 'Automate Everything', desc: 'Write scripts to automate repetitive tasks and workflows', tag: 'AUTOMATION' },
-    { icon: '🎮', title: 'Game Development', desc: 'Build a game from concept to playable — with AI assistance', tag: 'GAMING' },
+    { icon: '+', title: 'Network Recon & Audit', desc: 'Scan your network for open ports, services, and vulnerabilities', tag: 'SECURITY' },
+    { icon: '</>', title: 'Build an AI Agent', desc: 'Create a Discord/Telegram bot powered by multiple AI models', tag: 'CODING' },
+    { icon: '%', title: 'Deep Research', desc: 'Analyze crypto, stocks, or any topic with AI-powered intelligence', tag: 'ANALYSIS' },
+    { icon: '#', title: 'Build a Web App', desc: 'Design and build a complete web application from scratch', tag: 'CREATION' },
+    { icon: '~', title: 'Professional Pitch Deck', desc: 'Create a compelling investor pitch deck or business proposal', tag: 'BUSINESS' },
+    { icon: '@', title: 'Master Any Subject', desc: 'Learn anything -- from quantum physics to machine learning', tag: 'LEARNING' },
+    { icon: '!', title: 'Automate Everything', desc: 'Write scripts to automate repetitive tasks and workflows', tag: 'AUTOMATION' },
+    { icon: '*', title: 'Game Development', desc: 'Build a game from concept to playable -- with AI assistance', tag: 'GAMING' },
   ];
+
+  // ── Arc Reactor SVG segments ───────────────────────────────
+  const segmentsOuter = Array.from({ length: 12 }, (_, i) => i * 30);
+  const segmentsInner = Array.from({ length: 8 }, (_, i) => i * 45);
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-between overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #080c14 0%, #0a1020 40%, #0c1428 100%)' }}>
+      style={{ background: 'linear-gradient(180deg, #030508 0%, #040810 30%, #050a14 60%, #04060c 100%)' }}>
 
-      {/* Boot Sequence */}
+      {/* Hex grid background */}
+      <div className="hex-grid" />
+
+      {/* Data stream background */}
+      <div className="data-stream">
+        {dataColumns.map((col, i) => (
+          <div key={i} className="data-stream-column"
+            style={{ left: col.left, animationDuration: `${col.duration}s`, animationDelay: `${col.delay}s` }}>
+            {col.chars}
+          </div>
+        ))}
+      </div>
+
+      {/* Scan lines */}
+      <div className="jarvis-scanlines" />
+
+      {/* Mode glow */}
+      <div className="mode-glow" data-mode={mode} />
+
+      {/* ═══ BOOT SEQUENCE ═══ */}
       <AnimatePresence>
         {booting && (
-          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#080c14]">
-            <div className="max-w-lg w-full px-8 space-y-1">
-              {/* JARVIS logo */}
-              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                className="text-center mb-8">
-                <div className="text-5xl mb-3">⬡</div>
-                <div className="text-xl tracking-[0.4em] text-cyan-400/80 font-light">J.A.R.V.I.S.</div>
-                <div className="text-[10px] tracking-[0.3em] text-slate-600 mt-2">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+            style={{ background: 'linear-gradient(180deg, #020306, #04060c)' }}>
+            <div className="max-w-xl w-full px-8">
+              {/* Arc Reactor Boot Icon */}
+              <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
+                className="text-center mb-10">
+                <div className="relative inline-block">
+                  <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(0,200,255,0.15)" strokeWidth="0.5" />
+                    <circle cx="40" cy="40" r="22" fill="none" stroke="rgba(0,200,255,0.2)" strokeWidth="0.5"
+                      strokeDasharray="4 6" />
+                    <circle cx="40" cy="40" r="14" fill="none" stroke="rgba(0,200,255,0.3)" strokeWidth="1" />
+                    <circle cx="40" cy="40" r="6" fill="rgba(0,200,255,0.4)"
+                      style={{ filter: 'drop-shadow(0 0 8px rgba(0,200,255,0.6))' }} />
+                  </svg>
+                </div>
+                <div className="mt-6 text-[11px] tracking-[0.6em] text-cyan-400/60 font-light"
+                  style={{ fontFamily: 'Courier New, monospace' }}>
+                  J.A.R.V.I.S.
+                </div>
+                <div className="text-[9px] tracking-[0.4em] text-slate-600 mt-2"
+                  style={{ fontFamily: 'Courier New, monospace' }}>
+                  JUST A RATHER VERY INTELLIGENT SYSTEM
+                </div>
               </motion.div>
+
               {/* Boot lines */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {bootLines.map((line, i) => (
                   <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-[11px] font-mono">
-                    <span className="text-cyan-500/60">{`>`}</span>
-                    <span className="text-slate-400">{line}</span>
-                    <span className="text-emerald-400 ml-auto">OK</span>
+                    className="flex items-center gap-3 text-[10px] font-mono">
+                    <span className="text-cyan-500/40">[</span>
+                    <span className="text-cyan-400/50">{line}</span>
+                    <span className="text-emerald-400/70 ml-auto">OK</span>
+                    <span className="text-cyan-500/40">]</span>
                   </motion.div>
                 ))}
               </div>
+
               {/* Progress bar */}
-              <div className="mt-6 h-[2px] bg-white/5 rounded-full overflow-hidden">
+              <div className="mt-6 h-[1px] bg-white/[0.03] overflow-hidden">
                 <motion.div initial={{ width: '0%' }}
                   animate={{ width: `${(bootLines.length / BOOT_SEQUENCE.length) * 100}%` }}
                   transition={{ duration: 0.3 }}
-                  className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500" />
+                  className="h-full bg-gradient-to-r from-cyan-500/50 to-cyan-400/30" />
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Ambient glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.06) 0%, rgba(99,102,241,0.03) 40%, transparent 70%)' }} />
-      </div>
-
-      {/* First-Launch API Key Setup */}
+      {/* ═══ API KEY SETUP ═══ */}
       <AnimatePresence>
         {setupOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#0c1018] border border-white/10 rounded-2xl p-8 max-w-md w-[90vw] text-center space-y-5">
-              <div className="text-4xl mb-2">⬡</div>
-              <div className="text-lg text-white font-light">Welcome to JARVIS</div>
-              <div className="text-sm text-slate-400">Enter your OpenRouter API key to activate the neural mesh.</div>
+            className="fixed inset-0 z-[70] flex items-center justify-center"
+            style={{ background: 'rgba(2,4,8,0.92)' }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="hud-panel rounded-lg p-8 max-w-md w-[90vw] text-center relative">
+              <div className="corner-line-tl" />
+              <div className="corner-line-br" />
+              <div className="hud-text-bright mb-6">SYSTEM ACTIVATION REQUIRED</div>
+              <div className="hud-text mb-1">STARK INDUSTRIES NEURAL MESH</div>
+              <div className="text-[10px] text-slate-500 mb-6" style={{ fontFamily: 'Courier New, monospace' }}>
+                Enter your OpenRouter API key to initialize the neural mesh network.
+              </div>
               <input type="password" value={setupKey} onChange={e => setSetupKey(e.target.value)}
                 placeholder="sk-or-v1-..."
-                className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500/30 transition-all font-mono text-center"
-                onKeyDown={e => { if (e.key === 'Enter' && setupKey.trim()) { localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() })); setSetupOpen(false); } }}
-                autoFocus />
-              <button onClick={() => { if (setupKey.trim()) { localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() })); setSetupOpen(false); } }}
+                className="w-full bg-transparent border border-cyan-500/15 rounded px-4 py-3 text-sm text-cyan-100 placeholder-slate-600 focus:border-cyan-400/30 transition-all text-center"
+                style={{ fontFamily: 'Courier New, monospace' }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && setupKey.trim()) {
+                    localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() }));
+                    setSetupOpen(false);
+                  }
+                }} autoFocus />
+              <button onClick={() => {
+                if (setupKey.trim()) {
+                  localStorage.setItem('jarvis_settings', JSON.stringify({ openrouterApiKey: setupKey.trim() }));
+                  setSetupOpen(false);
+                }
+              }}
                 disabled={!setupKey.trim()}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 border border-cyan-500/30 text-cyan-400 text-sm font-medium hover:from-cyan-500/30 hover:to-indigo-500/30 disabled:opacity-30 transition-all">
-                Activate JARVIS
+                className="w-full mt-4 py-3 rounded border border-cyan-500/20 text-cyan-400/80 text-[11px] tracking-[0.2em] hover:bg-cyan-500/5 disabled:opacity-20 transition-all"
+                style={{ fontFamily: 'Courier New, monospace' }}>
+                INITIALIZE SYSTEM
               </button>
-              <div className="text-[10px] text-slate-600">Get your key at <span className="text-cyan-400/60">openrouter.ai</span></div>
+              <div className="text-[9px] text-slate-600 mt-4" style={{ fontFamily: 'Courier New, monospace' }}>
+                OBTAIN KEY FROM OPENROUTER.AI
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Error Toast */}
+      {/* ═══ ERROR TOAST ═══ */}
       <AnimatePresence>
         {error && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 text-xs">
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 hud-panel border-red-500/20 text-red-400/80 text-[10px] tracking-wider"
+            style={{ fontFamily: 'Courier New, monospace' }}>
             {error}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Top Bar */}
-      <div className="relative z-10 w-full flex items-center justify-between px-6 pt-6 md:pt-8">
-        <div className="text-[10px] tracking-[0.5em] text-slate-500 font-light">J.A.R.V.I.S.</div>
+      {/* ═══ TOP HUD BAR ═══ */}
+      <div className="relative z-10 w-full flex items-center justify-between px-4 md:px-8 pt-4 md:pt-6">
+        {/* Left: JARVIS label */}
         <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full transition-all ${
-            mode === 'listening' ? 'bg-green-400 animate-pulse' :
-            mode === 'thinking' ? 'bg-yellow-400 animate-pulse' :
+          <div className="hud-text tracking-[0.5em] text-cyan-400/40">J.A.R.V.I.S.</div>
+          <div className="hidden md:block w-12 h-[1px] bg-gradient-to-r from-cyan-500/20 to-transparent" />
+        </div>
+
+        {/* Right: Status + Time + Buttons */}
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Status dot */}
+          <div className={`status-dot ${
+            mode === 'listening' ? 'bg-green-400' :
+            mode === 'thinking' ? 'bg-amber-400' :
             mode === 'speaking' ? 'bg-cyan-400' :
             'bg-slate-600'
-          }`} />
-          <div className="text-[10px] tracking-wider text-slate-600 font-mono">{pcHealth.time}</div>
+          }`} style={{
+            boxShadow: mode === 'listening' ? '0 0 6px rgba(74,222,128,0.5)' :
+              mode === 'thinking' ? '0 0 6px rgba(251,191,36,0.5)' :
+              mode === 'speaking' ? '0 0 6px rgba(0,200,255,0.5)' : 'none'
+          }} />
+
+          {/* Time */}
+          <div className="hud-text text-cyan-400/30 text-[10px]">{pcHealth.time}</div>
+
+          {/* Separator */}
+          <div className="w-[1px] h-3 bg-cyan-500/10" />
+
+          {/* Auto-Recon */}
           <button onClick={() => setReconOpen(true)}
-            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-xs" title="Auto-Recon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
+            title="Auto-Recon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
               <line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" />
               <line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
             </svg>
           </button>
+
+          {/* Hardware */}
           <button onClick={() => setHardwareOpen(true)}
-            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-orange-400 hover:border-orange-500/30 transition-all text-xs" title="Hardware Designer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
+            title="Hardware Designer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
             </svg>
           </button>
+
+          {/* Terminal */}
           <button onClick={() => setTerminalOpen(!terminalOpen)}
-            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all text-xs font-mono">
+            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
+            title="Terminal">
             {'>'}
           </button>
+
+          {/* Info */}
           <button onClick={() => setInfoOpen(!infoOpen)}
-            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-xs">
+            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
+            title="System Info">
             i
           </button>
         </div>
       </div>
 
-      {/* Center Orb */}
-      <div className="relative z-10 flex-1 flex items-center justify-center">
-        <div className="relative">
-          <div className={`absolute ${orbGlowSize} rounded-full blur-3xl transition-all duration-700 ${orbGlow}`} />
+      {/* ═══ LEFT HUD PANEL ═══ */}
+      <div className="hidden lg:block absolute left-6 top-20 z-10 w-48">
+        <div className="hud-panel rounded p-3 hud-animate-in" style={{ animationDelay: '0.1s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">SYSTEM STATUS</div>
+          <div className="space-y-1.5">
+            {[
+              { label: 'CORE', value: `${pcHealth.cores} THREADS`, ok: pcHealth.cores > 0 },
+              { label: 'MEMORY', value: pcHealth.memory, ok: pcHealth.memory !== 'Unknown' },
+              { label: 'NETWORK', value: pcHealth.online ? 'ONLINE' : 'OFFLINE', ok: pcHealth.online },
+              { label: 'SESSION', value: pcHealth.uptime, ok: true },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between">
+                <div className="hud-text text-[8px]">{item.label}</div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1 h-1 rounded-full ${item.ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                  <div className="hud-value text-[9px]">{item.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-          <svg viewBox="0 0 200 200" className="w-48 h-48 md:w-64 md:h-64 relative z-10">
-            <defs>
-              <radialGradient id="orbGrad" cx="40%" cy="35%" r="60%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.35)" />
-                <stop offset="30%" stopColor="rgba(168,132,252,0.25)" />
-                <stop offset="60%" stopColor="rgba(99,102,241,0.15)" />
-                <stop offset="100%" stopColor="rgba(6,182,212,0.05)" />
-              </radialGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="blur" />
-                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-            </defs>
-            <g opacity={mode === 'listening' ? 0.25 : mode === 'thinking' ? 0.35 : 0.15} filter="url(#glow)">
-              <motion.ellipse cx="100" cy="100" rx="85" ry="85" stroke="rgba(6,182,212,0.4)" strokeWidth="0.5" fill="none"
-                animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }} style={{ transformOrigin: '100px 100px' }} />
-              <motion.ellipse cx="100" cy="100" rx="92" ry="60" stroke="rgba(99,102,241,0.3)" strokeWidth="0.5" fill="none"
-                animate={{ rotate: -360 }} transition={{ duration: 45, repeat: Infinity, ease: 'linear' }} style={{ transformOrigin: '100px 100px' }} />
-              <motion.ellipse cx="100" cy="100" rx="70" ry="95" stroke="rgba(168,132,252,0.25)" strokeWidth="0.5" fill="none"
-                animate={{ rotate: 360 }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }} style={{ transformOrigin: '100px 100px' }} />
-            </g>
-            <polygon points="100,20 155,55 170,100 155,145 100,180 45,145 30,100 45,55"
-              fill="url(#orbGrad)" stroke="rgba(168,132,252,0.3)" strokeWidth="0.8" filter="url(#glow)" />
-            <polygon points="100,20 130,70 100,100 70,70" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-            <polygon points="100,100 155,55 170,100" fill="rgba(168,132,252,0.06)" stroke="rgba(168,132,252,0.08)" strokeWidth="0.3" />
-            <polygon points="100,100 30,100 45,55" fill="rgba(99,102,241,0.05)" stroke="rgba(99,102,241,0.06)" strokeWidth="0.3" />
-            <polygon points="100,100 155,145 100,180" fill="rgba(6,182,212,0.04)" stroke="rgba(6,182,212,0.06)" strokeWidth="0.3" />
-            <circle cx="88" cy="72" r="18" fill="rgba(255,255,255,0.12)" />
-            <circle cx="88" cy="72" r="8" fill="rgba(255,255,255,0.2)" />
-          </svg>
+        <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.2s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">VOICE INPUT</div>
+          <div className="flex items-center gap-2">
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              mode === 'listening' ? 'bg-green-400' : mode === 'speaking' ? 'bg-cyan-400' : 'bg-slate-600'
+            }`} />
+            <div className="hud-value text-[9px]">{status}</div>
+          </div>
+          {transcript && (
+            <div className="mt-2 text-[9px] text-cyan-300/40 italic truncate" style={{ fontFamily: 'Courier New, monospace' }}>
+              &quot;{transcript}&quot;
+            </div>
+          )}
+        </div>
 
-          {/* Status */}
-          <motion.div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
-            animate={{ opacity: mode === 'idle' ? 0.5 : 1 }}>
-            <span className={`text-[10px] tracking-[0.4em] font-light ${
-              wakeDetected ? 'text-cyan-300' : 'text-cyan-400/60'
-            }`}>{status}</span>
-          </motion.div>
+        <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.3s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">NEURAL MESH</div>
+          <div className="grid grid-cols-3 gap-1">
+            {['GEM', 'CLD', 'GPT', 'DSK', 'MTA', 'QWN'].map(p => (
+              <div key={p} className="text-center py-1 border border-cyan-500/8 rounded text-[8px] text-cyan-400/40"
+                style={{ fontFamily: 'Courier New, monospace' }}>
+                {p}
+              </div>
+            ))}
+          </div>
+          <div className="hud-text text-[7px] mt-2 text-cyan-400/20">182 NODE LINKS ACTIVE</div>
         </div>
       </div>
 
-      {/* Transcript / Response — stays visible for MSG_EXPIRY_MS */}
+      {/* ═══ RIGHT HUD PANEL ═══ */}
+      <div className="hidden lg:block absolute right-6 top-20 z-10 w-48">
+        <div className="hud-panel rounded p-3 hud-animate-in" style={{ animationDelay: '0.15s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">CAPABILITIES</div>
+          <div className="space-y-1">
+            {[
+              { label: 'VOICE RECOGNITION', status: 'ACTIVE' },
+              { label: 'KNOWLEDGE BASE', status: '20+ ENTRIES' },
+              { label: 'RECON ENGINE', status: 'READY' },
+              { label: 'HARDWARE DESIGN', status: 'READY' },
+              { label: 'SELF-LEARNING', status: 'RECORDING' },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between">
+                <div className="hud-text text-[8px]">{item.label}</div>
+                <div className="hud-value text-[8px] text-emerald-400/50">{item.status}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.25s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">KNOWLEDGE DOMAINS</div>
+          <div className="flex flex-wrap gap-1">
+            {['RECON', 'WEB SEC', 'EXPLOIT', 'CRYPTO', 'WIRELESS', 'FORENSICS', 'SOCIAL', 'CAD', 'BUG BOUNTY'].map(cat => (
+              <span key={cat} className="px-1.5 py-0.5 border border-cyan-500/8 text-[7px] text-cyan-400/30"
+                style={{ fontFamily: 'Courier New, monospace' }}>
+                {cat}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.35s' }}>
+          <div className="hud-text text-cyan-400/30 mb-2">QUICK COMMANDS</div>
+          <div className="space-y-1">
+            {['FIND BUG BOUNTY TARGETS', 'SCAN NETWORK', 'BUILD AI AGENT', 'CREATE PITCH DECK'].map(cmd => (
+              <button key={cmd}
+                onClick={() => { processMessage(cmd.toLowerCase()); }}
+                className="block w-full text-left hud-value text-[8px] text-cyan-400/30 hover:text-cyan-400/60 transition-colors py-0.5 truncate">
+                &gt; {cmd}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ CENTER ARC REACTOR ═══ */}
+      <div className="relative z-10 flex-1 flex items-center justify-center">
+        <div className="relative">
+          {/* Ambient glow behind reactor */}
+          <div className="absolute -inset-32 rounded-full pointer-events-none"
+            style={{
+              background: mode === 'thinking'
+                ? 'radial-gradient(circle, rgba(255,180,0,0.04) 0%, transparent 60%)'
+                : 'radial-gradient(circle, rgba(0,180,255,0.04) 0%, transparent 60%)',
+              transition: 'all 1s ease',
+            }} />
+
+          {/* Arc Reactor */}
+          <div className="arc-reactor-core" data-mode={mode}>
+            {/* Outer dashed ring */}
+            <div className="reactor-outer-dashed" />
+
+            {/* Ring 1 — outermost, slow */}
+            <div className="reactor-ring reactor-ring-1" />
+
+            {/* Ring 2 — dashed, reverse */}
+            <div className="reactor-ring reactor-ring-2" />
+
+            {/* Ring 3 — solid */}
+            <div className="reactor-ring reactor-ring-3" />
+
+            {/* Ring 4 — outermost thin */}
+            <div className="reactor-ring reactor-ring-4" />
+
+            {/* Segments outer ring */}
+            <div className="reactor-segments">
+              {segmentsOuter.map((deg, i) => (
+                <div key={i} className="reactor-segment" style={{ transform: `rotate(${deg}deg)` }} />
+              ))}
+            </div>
+
+            {/* Segments inner ring */}
+            <div className="reactor-segments-inner">
+              {segmentsInner.map((deg, i) => (
+                <div key={i} className="reactor-segment-inner" style={{ transform: `rotate(${deg}deg)` }} />
+              ))}
+            </div>
+
+            {/* Core glow */}
+            <div className="arc-core-glow" />
+
+            {/* Orbiting particles */}
+            <div className="orbit-particle" />
+            <div className="orbit-particle" />
+            <div className="orbit-particle" />
+          </div>
+
+          {/* HUD crosshair behind reactor */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hud-crosshair"
+            style={{ width: '280px', height: '280px', opacity: 0.3 }} />
+
+          {/* Status label below reactor */}
+          <motion.div className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap"
+            animate={{ opacity: mode === 'idle' ? 0.4 : 1 }}>
+            <div className={`hud-text-bright tracking-[0.4em] text-[10px] ${
+              wakeDetected ? 'text-cyan-300' : 'text-cyan-400/40'
+            }`}>
+              {status}
+            </div>
+          </motion.div>
+
+          {/* Response time */}
+          {responseTime > 0 && mode === 'speaking' && (
+            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <div className="hud-text text-[8px] text-cyan-400/20">RESPONSE DELIVERED</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ TRANSCRIPT / RESPONSE ═══ */}
       <AnimatePresence>
         {transcript && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="absolute bottom-36 left-1/2 -translate-x-1/2 max-w-md px-6">
-            <p className="text-sm text-cyan-300/70 text-center italic">"{transcript}"</p>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 max-w-lg px-8">
+            <p className="text-[11px] text-cyan-300/40 text-center italic"
+              style={{ fontFamily: 'Courier New, monospace' }}>
+              &quot;{transcript}&quot;
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
       <AnimatePresence>
         {response && (Date.now() - responseTime < MSG_EXPIRY_MS || mode === 'speaking') && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="absolute bottom-36 left-1/2 -translate-x-1/2 max-w-lg px-6">
-            <p className="text-xs text-slate-400 text-center leading-relaxed line-clamp-3">
-              {response.slice(0, 400)}{response.length > 400 ? '...' : ''}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="absolute bottom-28 md:bottom-32 left-1/2 -translate-x-1/2 max-w-xl px-8">
+            <p className="text-[11px] text-slate-400/70 text-center leading-relaxed line-clamp-3"
+              style={{ fontFamily: 'Courier New, monospace' }}>
+              {response.slice(0, 500)}{response.length > 500 ? '...' : ''}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Bottom: Waveform + Text Input + Status indicator */}
-      <div className="relative z-10 w-full pb-6 px-4">
-        <div className="flex items-end justify-center gap-[2px] h-10 mb-4 px-8">
+      {/* ═══ BOTTOM WAVEFORM + INPUT ═══ */}
+      <div className="relative z-10 w-full pb-4 md:pb-6 px-4 md:px-8">
+        {/* Waveform */}
+        <div className="flex items-end justify-center gap-[1px] h-8 mb-3 px-12 md:px-24">
           {waveLevels.map((level, i) => {
             const ratio = i / waveBars;
-            const color = ratio < 0.33 ? `rgba(34,197,94,${0.4 + level * 0.6})`
-              : ratio < 0.66 ? `rgba(34,211,238,${0.4 + level * 0.6})`
-              : `rgba(139,92,246,${0.4 + level * 0.6})`;
-            return <div key={i} className="flex-1 rounded-full transition-all duration-75"
-              style={{ height: `${Math.max(2, level * 100)}%`, backgroundColor: color, minWidth: '2px' }} />;
+            const isActive = mode === 'listening' || mode === 'speaking';
+            const color = isActive
+              ? `rgba(0, 200, 255, ${0.15 + level * 0.5})`
+              : `rgba(0, 150, 200, ${0.05 + level * 0.1})`;
+            return (
+              <div key={i} className="wave-bar flex-1 rounded-full"
+                style={{
+                  height: `${Math.max(2, level * 100)}%`,
+                  backgroundColor: color,
+                  minWidth: '1px',
+                }} />
+            );
           })}
         </div>
-        <div className="flex items-center justify-center gap-4">
+
+        {/* Input row */}
+        <div className="flex items-center justify-center gap-3">
+          {/* Chat toggle */}
           <button onClick={() => setChatOpen(!chatOpen)}
-            className="w-12 h-12 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            className="w-10 h-10 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </button>
+
+          {/* Text input */}
           <form onSubmit={handleTextSubmit} className="flex-1 max-w-md">
             <input ref={inputRef} type="text" value={inputText} onChange={e => setInputText(e.target.value)}
-              placeholder='Type a message or say Hey Jarvis...'
-              className="w-full bg-white/[0.04] border border-white/10 rounded-full px-5 py-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500/30 focus:bg-white/[0.06] transition-all"
+              placeholder="Type a command or say Hey Jarvis..."
+              className="w-full bg-transparent border border-cyan-500/10 rounded px-4 py-2.5 text-[11px] text-cyan-100/80 placeholder-slate-600/50 focus:border-cyan-400/25 transition-all"
+              style={{ fontFamily: 'Courier New, monospace' }}
               disabled={mode === 'thinking'}
               onFocus={handleInputFocus}
               onBlur={handleInputBlur} />
           </form>
+
+          {/* Listen toggle */}
           <button onClick={() => {
             if (mode === 'listening') {
               if (recognitionRef.current) { recognitionRef.current.abort(); recognitionRef.current = null; }
@@ -594,114 +787,130 @@ export default function JarvisPage() {
               startListening();
             }
           }}
-            title={mode === 'listening' ? 'Click to pause listening' : 'Click to start listening'}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all border cursor-pointer ${
-              mode === 'listening' ? 'border-green-500/30 bg-green-500/10 hover:bg-green-500/20' :
-              mode === 'thinking' ? 'border-yellow-500/30 bg-yellow-500/10 animate-pulse' :
-              mode === 'speaking' ? 'border-cyan-500/30 bg-cyan-500/10' :
-              'border-white/10 bg-white/[0.03] hover:border-cyan-500/30 hover:bg-cyan-500/10'
+            title={mode === 'listening' ? 'Pause listening' : 'Start listening'}
+            className={`w-10 h-10 rounded flex items-center justify-center transition-all border ${
+              mode === 'listening'
+                ? 'border-green-500/20 bg-green-500/5 text-green-400/60'
+                : mode === 'thinking'
+                ? 'border-amber-500/20 bg-amber-500/5 text-amber-400/60'
+                : mode === 'speaking'
+                ? 'border-cyan-500/20 bg-cyan-500/5 text-cyan-400/60'
+                : 'border-cyan-500/10 text-cyan-400/30 hover:border-cyan-500/25 hover:text-cyan-400/50'
             }`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-              className={mode === 'listening' ? 'text-green-400' : mode === 'thinking' ? 'text-yellow-400' : mode === 'speaking' ? 'text-cyan-400' : 'text-slate-500'}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
               <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
             </svg>
           </button>
         </div>
+
+        {/* Bottom status bar */}
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <div className="hud-text text-[7px] text-cyan-400/15">J.A.R.V.I.S. v3.0</div>
+          <div className="w-[1px] h-2 bg-cyan-500/10" />
+          <div className="hud-text text-[7px] text-cyan-400/15">STARK INDUSTRIES</div>
+          <div className="w-[1px] h-2 bg-cyan-500/10" />
+          <div className="hud-text text-[7px] text-cyan-400/15">NEURAL MESH ACTIVE</div>
+        </div>
       </div>
 
-      {/* INFO PANEL */}
+      {/* ═══ INFO PANEL (System Dashboard) ═══ */}
       <AnimatePresence>
         {infoOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-            onClick={(e) => { if (e.target === e.currentTarget) setInfoOpen(false); }}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#0c1018]/95 border border-white/10 rounded-2xl w-[90vw] max-w-2xl max-h-[80vh] overflow-y-auto p-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs tracking-[0.3em] text-cyan-400/60">SYSTEM OVERVIEW</div>
-                  <div className="text-lg font-light text-white mt-1">J.A.R.V.I.S. Dashboard</div>
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            style={{ background: 'rgba(2,4,8,0.85)' }}
+            onClick={e => { if (e.target === e.currentTarget) setInfoOpen(false); }}>
+            <motion.div initial={{ scale: 0.97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              className="hud-panel rounded-lg w-[90vw] max-w-2xl max-h-[80vh] overflow-y-auto relative">
+              <div className="corner-line-tl" />
+              <div className="corner-line-br" />
+
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="hud-text text-cyan-400/30">SYSTEM OVERVIEW</div>
+                    <div className="hud-value text-lg text-cyan-100/80 mt-1">J.A.R.V.I.S. Dashboard</div>
+                  </div>
+                  <button onClick={() => setInfoOpen(false)}
+                    className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 transition-colors">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
                 </div>
-                <button onClick={() => setInfoOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-                <div className="text-4xl font-mono text-white font-light tracking-wider">{pcHealth.time}</div>
-                <div className="text-sm text-slate-400 mt-1">{pcHealth.date}</div>
-              </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-                <div className="text-[10px] tracking-[0.3em] text-cyan-400/60 mb-3">PC HEALTH</div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    { label: 'CPU CORES', value: pcHealth.cores || '—', icon: '⚡' },
-                    { label: 'MEMORY', value: pcHealth.memory, icon: '🧠' },
-                    { label: 'PLATFORM', value: pcHealth.platform, icon: '💻' },
-                    { label: 'LANGUAGE', value: pcHealth.language, icon: '🌐' },
-                    { label: 'STATUS', value: pcHealth.online ? 'ONLINE' : 'OFFLINE', icon: pcHealth.online ? '🟢' : '🔴' },
-                    { label: 'SESSION', value: pcHealth.uptime, icon: '⏱' },
-                  ].map(item => (
-                    <div key={item.label} className="bg-white/[0.02] rounded-lg p-3">
-                      <div className="text-[9px] tracking-wider text-slate-500 mb-1">{item.icon} {item.label}</div>
-                      <div className="text-sm text-white font-mono">{item.value}</div>
-                    </div>
-                  ))}
+
+                {/* Time Display */}
+                <div className="hud-panel rounded p-4 mb-4">
+                  <div className="hud-value text-3xl text-cyan-100/70 font-light tracking-wider">{pcHealth.time}</div>
+                  <div className="hud-text text-[10px] mt-1">{pcHealth.date}</div>
                 </div>
-              </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-                <div className="text-[10px] tracking-[0.3em] text-cyan-400/60 mb-3">NEURAL MESH — 14 MODELS, 6 PROVIDERS</div>
-                <div className="flex flex-wrap gap-2">
-                  {['Google', 'Anthropic', 'OpenAI', 'DeepSeek', 'Meta', 'Qwen'].map(p => (
-                    <span key={p} className="px-3 py-1 rounded-full text-[10px] border border-cyan-500/20 bg-cyan-500/5 text-cyan-400/80">{p}</span>
-                  ))}
-                </div>
-                <div className="text-[10px] text-slate-600 mt-2">182 node-to-node connections · Spider-web orchestration</div>
-              </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-                <div className="text-[10px] tracking-[0.3em] text-emerald-400/60 mb-3">KNOWLEDGE BASE & MEMORY</div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { label: 'KNOWLEDGE', value: '14 Entries', icon: '📚' },
-                    { label: 'TOOLS', value: '50+ Commands', icon: '🔧' },
-                    { label: 'CATEGORIES', value: '11 Domains', icon: '🎯' },
-                    { label: 'MEMORY', value: 'Active', icon: '🧠' },
-                  ].map(item => (
-                    <div key={item.label} className="bg-white/[0.02] rounded-lg p-2.5">
-                      <div className="text-[9px] tracking-wider text-slate-500 mb-1">{item.icon} {item.label}</div>
-                      <div className="text-xs text-white font-mono">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {['Recon', 'Web Security', 'Exploitation', 'Passwords', 'Wireless', 'Post-Exploit', 'Forensics', 'Social Eng', 'Crypto'].map(cat => (
-                    <span key={cat} className="px-2 py-0.5 rounded text-[9px] border border-emerald-500/20 bg-emerald-500/5 text-emerald-400/60">{cat}</span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] tracking-[0.3em] text-cyan-400/60 mb-3">WHAT JARVIS CAN DO FOR YOU</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {trendingIdeas.map(idea => (
-                    <button key={idea.title}
-                      onClick={() => { setInfoOpen(false); processMessage(`Help me with: ${idea.title}`); }}
-                      className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-left hover:border-cyan-500/20 hover:bg-cyan-500/[0.03] transition-all group">
-                      <div className="flex items-start gap-3">
-                        <span className="text-xl mt-0.5">{idea.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-white group-hover:text-cyan-300 transition-colors">{idea.title}</span>
-                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-white/5 text-slate-500 tracking-wider">{idea.tag}</span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{idea.desc}</p>
-                        </div>
+
+                {/* PC Health */}
+                <div className="hud-panel rounded p-4 mb-4">
+                  <div className="hud-text text-cyan-400/30 mb-3">SYSTEM DIAGNOSTICS</div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      { label: 'CPU CORES', value: pcHealth.cores || '--' },
+                      { label: 'MEMORY', value: pcHealth.memory },
+                      { label: 'PLATFORM', value: pcHealth.platform },
+                      { label: 'LANGUAGE', value: pcHealth.language },
+                      { label: 'NETWORK', value: pcHealth.online ? 'ONLINE' : 'OFFLINE' },
+                      { label: 'SESSION UPTIME', value: pcHealth.uptime },
+                    ].map(item => (
+                      <div key={item.label} className="bg-cyan-500/[0.02] border border-cyan-500/5 rounded p-2.5">
+                        <div className="hud-text text-[8px] mb-1">{item.label}</div>
+                        <div className="hud-value text-[11px]">{item.value}</div>
                       </div>
-                    </button>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Neural Mesh */}
+                <div className="hud-panel rounded p-4 mb-4">
+                  <div className="hud-text text-cyan-400/30 mb-3">NEURAL MESH -- 14 MODELS, 6 PROVIDERS</div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Google', 'Anthropic', 'OpenAI', 'DeepSeek', 'Meta', 'Qwen'].map(p => (
+                      <span key={p} className="px-3 py-1 rounded border border-cyan-500/15 text-[10px] text-cyan-400/60"
+                        style={{ fontFamily: 'Courier New, monospace' }}>
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="hud-text text-[8px] mt-2 text-cyan-400/15">182 NODE-TO-NODE CONNECTIONS</div>
+                </div>
+
+                {/* What JARVIS Can Do */}
+                <div>
+                  <div className="hud-text text-cyan-400/30 mb-3">CAPABILITIES</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {trendingIdeas.map(idea => (
+                      <button key={idea.title}
+                        onClick={() => { setInfoOpen(false); processMessage(`Help me with: ${idea.title}`); }}
+                        className="hud-panel rounded p-3 text-left hover:border-cyan-500/20 transition-all group">
+                        <div className="flex items-start gap-3">
+                          <span className="hud-value text-sm text-cyan-400/30 group-hover:text-cyan-400/60 mt-0.5 w-5 text-center">
+                            {idea.icon}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="hud-value text-[11px] text-cyan-100/60 group-hover:text-cyan-100/90 transition-colors">
+                                {idea.title}
+                              </span>
+                              <span className="text-[7px] px-1 py-0.5 border border-cyan-500/10 text-cyan-400/25"
+                                style={{ fontFamily: 'Courier New, monospace' }}>
+                                {idea.tag}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-500/60 mt-0.5 leading-relaxed">{idea.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -709,42 +918,46 @@ export default function JarvisPage() {
         )}
       </AnimatePresence>
 
-      {/* Terminal View */}
+      {/* ═══ TERMINAL PANEL ═══ */}
       <AnimatePresence>
         {terminalOpen && (
           <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute bottom-0 left-0 right-0 h-[45vh] bg-[#0a0e14]/95 backdrop-blur-xl border-t border-emerald-500/20 flex flex-col z-50">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-emerald-500/10">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                <span className="text-[10px] tracking-wider text-emerald-500/60 ml-2">TERMINAL</span>
+            className="absolute bottom-0 left-0 right-0 h-[40vh] bg-[#04060c]/95 backdrop-blur-xl border-t border-cyan-500/10 flex flex-col z-50">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/5">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-red-500/40" />
+                  <div className="w-2 h-2 rounded-full bg-amber-500/40" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500/40" />
+                </div>
+                <span className="hud-text text-[9px] text-cyan-400/30">TERMINAL</span>
               </div>
               <button onClick={() => setTerminalOpen(false)}
-                className="text-[10px] text-slate-600 hover:text-white transition-colors">CLOSE</button>
+                className="hud-text text-[8px] text-cyan-400/20 hover:text-cyan-400/50 transition-colors">
+                CLOSE
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-1">
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] space-y-1">
               {terminalLines.length === 0 && (
-                <div className="text-slate-700 text-center mt-12">
+                <div className="text-cyan-400/10 text-center mt-12 text-[10px]">
                   Terminal output will appear here when commands are executed.
                 </div>
               )}
               {terminalLines.map((line, i) => (
                 <div key={i} className={`flex items-start gap-2 ${
-                  line.type === 'cmd' ? 'text-emerald-400' :
-                  line.type === 'err' ? 'text-red-400' :
-                  line.type === 'info' ? 'text-cyan-400/60' :
-                  'text-slate-400'
+                  line.type === 'cmd' ? 'text-emerald-400/70' :
+                  line.type === 'err' ? 'text-red-400/70' :
+                  line.type === 'info' ? 'text-cyan-400/40' :
+                  'text-slate-400/60'
                 }`}>
-                  {line.type === 'cmd' && <span className="text-emerald-600">$</span>}
+                  {line.type === 'cmd' && <span className="text-emerald-500/30">$</span>}
                   <span className="whitespace-pre-wrap break-all">{line.text}</span>
                 </div>
               ))}
             </div>
-            <div className="px-4 py-2 border-t border-emerald-500/10">
-              <form onSubmit={(e) => {
+            <div className="px-4 py-2 border-t border-cyan-500/5">
+              <form onSubmit={e => {
                 e.preventDefault();
                 const input = (e.target as any).elements.cmd;
                 if (input.value.trim()) {
@@ -753,8 +966,8 @@ export default function JarvisPage() {
                   input.value = '';
                 }
               }} className="flex gap-2">
-                <input name="cmd" type="text" placeholder="Type a command..."
-                  className="flex-1 bg-transparent border-none outline-none text-emerald-400 font-mono text-[11px] placeholder-slate-700"
+                <input name="cmd" type="text" placeholder="Enter command..."
+                  className="flex-1 bg-transparent border-none outline-none text-emerald-400/60 font-mono text-[10px] placeholder-cyan-500/10"
                   onFocus={handleInputFocus} onBlur={handleInputBlur} />
               </form>
             </div>
@@ -762,69 +975,83 @@ export default function JarvisPage() {
         )}
       </AnimatePresence>
 
-      {/* Chat Drawer */}
+      {/* ═══ CHAT DRAWER ═══ */}
       <AnimatePresence>
         {chatOpen && (
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute right-0 top-0 h-full w-[360px] max-w-[85vw] bg-[#0c1018]/95 backdrop-blur-xl border-l border-white/5 flex flex-col z-50">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            className="absolute right-0 top-0 h-full w-[360px] max-w-[85vw] flex flex-col z-50"
+            style={{ background: 'rgba(4,6,12,0.95)', borderLeft: '1px solid rgba(0,200,255,0.05)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-500/5">
               <div>
-                <div className="text-sm font-medium text-cyan-400/80 tracking-wider">CONVERSATION</div>
-                <div className="text-[10px] text-slate-600 mt-0.5">{messages.length} messages</div>
+                <div className="hud-text text-cyan-400/40">CONVERSATION LOG</div>
+                <div className="text-[9px] text-slate-600 mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>
+                  {messages.length} ENTRIES
+                </div>
               </div>
               <button onClick={() => setChatOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
               {messages.length === 0 && (
-                <div className="text-center text-slate-600 text-xs mt-12">
-                  <div className="text-2xl mb-3 opacity-30">⬡</div>
-                  <p>Start a conversation with JARVIS.</p>
-                  <p className="mt-1 text-slate-700">Say &quot;Hey Jarvis&quot; or type a message below.</p>
+                <div className="text-center text-cyan-400/15 text-[10px] mt-12"
+                  style={{ fontFamily: 'Courier New, monospace' }}>
+                  <div className="mb-3 text-lg text-cyan-400/10">[ ]</div>
+                  <p>INITIATE CONVERSATION</p>
+                  <p className="mt-1 text-cyan-400/10">&quot;Hey Jarvis&quot; or type below</p>
                 </div>
               )}
               {messages.map((msg, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                <motion.div key={i} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[85%] px-3 py-2 rounded ${
                     msg.role === 'user'
-                      ? 'bg-cyan-500/10 border border-cyan-500/20 text-slate-200'
-                      : 'bg-white/[0.03] border border-white/[0.06] text-slate-300'
+                      ? 'border border-cyan-500/15 bg-cyan-500/5'
+                      : 'border border-cyan-500/8 bg-cyan-500/[0.02]'
                   }`}>
-                    <div>{msg.text}</div>
-                    <div className="text-[9px] text-slate-600 mt-1">{msg.time}</div>
+                    <div className="text-[11px] text-cyan-100/50 leading-relaxed"
+                      style={{ fontFamily: 'Courier New, monospace' }}>
+                      {msg.text}
+                    </div>
+                    <div className="text-[8px] text-slate-600 mt-1"
+                      style={{ fontFamily: 'Courier New, monospace' }}>
+                      {msg.time}
+                    </div>
                   </div>
                 </motion.div>
               ))}
               {mode === 'thinking' && (
                 <div className="flex justify-start">
-                  <div className="px-4 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                    <div className="flex gap-1.5">
-                      <span className="w-1.5 h-1.5 bg-cyan-400/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-cyan-400/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-cyan-400/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="px-3 py-2 rounded border border-cyan-500/8 bg-cyan-500/[0.02]">
+                    <div className="flex gap-2">
+                      {[0, 1, 2].map(i => (
+                        <motion.div key={i}
+                          className="w-1 h-1 rounded-full bg-cyan-400/40"
+                          animate={{ opacity: [0.2, 0.8, 0.2] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="px-4 py-3 border-t border-white/5">
+            <div className="px-4 py-3 border-t border-cyan-500/5">
               <form onSubmit={handleTextSubmit} className="flex gap-2">
                 <input type="text" value={inputText} onChange={e => setInputText(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-white/[0.04] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500/30 transition-colors"
+                  placeholder="Enter command..."
+                  className="flex-1 bg-transparent border border-cyan-500/10 rounded px-3 py-2 text-[11px] text-cyan-100/60 placeholder-slate-600/40 focus:border-cyan-500/25 transition-colors"
+                  style={{ fontFamily: 'Courier New, monospace' }}
                   disabled={mode === 'thinking'}
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur} />
                 <button type="submit" disabled={!inputText.trim() || mode === 'thinking'}
-                  className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-20 transition-all">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  className="w-9 h-9 rounded border border-cyan-500/15 flex items-center justify-center text-cyan-400/40 hover:bg-cyan-500/5 disabled:opacity-15 transition-all">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
                 </button>
