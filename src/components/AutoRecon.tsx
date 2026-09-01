@@ -72,6 +72,126 @@ interface AutoReconProps {
   onClose: () => void;
 }
 
+function buildAllInOneReport(data: any, result: any): string {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  let report = '';
+  report += '╔═══════════════════════════════════════════════════════════════════════════════╗\n';
+  report += '║                    JARVIS BUG BOUNTY REPORT                                 ║\n';
+  report += '║                    All-in-One Submission Document                            ║\n';
+  report += '╠═══════════════════════════════════════════════════════════════════════════════╣\n';
+  report += `║  Target:     ${result.target.padEnd(57)}║\n`;
+  report += `║  Date:       ${dateStr} ${timeStr}`.padEnd(71) + '║\n';
+  report += `║  Reports:    ${String(data.totalReports).padEnd(57)}║\n`;
+  report += `║  Generated:  JARVIS AI — Automated Reconnaissance & Reporting Engine`.padEnd(71) + '║\n';
+  report += '╚═══════════════════════════════════════════════════════════════════════════════╝\n\n';
+
+  // Executive Summary
+  report += '═══════════════════════════════════════════════════════════════════════════════\n';
+  report += '  EXECUTIVE SUMMARY\n';
+  report += '═══════════════════════════════════════════════════════════════════════════════\n\n';
+
+  const counts = { critical: 0, high: 0, medium: 0, low: 0, informational: 0 };
+  for (const r of data.reports) counts[r.severity as keyof typeof counts]++;
+
+  report += `  Total Vulnerabilities Found: ${data.totalReports}\n\n`;
+  if (counts.critical > 0) report += `  CRITICAL:  ${counts.critical}\n`;
+  if (counts.high > 0) report += `  HIGH:      ${counts.high}\n`;
+  if (counts.medium > 0) report += `  MEDIUM:    ${counts.medium}\n`;
+  if (counts.low > 0) report += `  LOW:       ${counts.low}\n`;
+  if (counts.informational > 0) report += `  INFO:      ${counts.informational}\n`;
+  report += '\n';
+
+  // Scope & Methodology
+  report += '═══════════════════════════════════════════════════════════════════════════════\n';
+  report += '  SCOPE & METHODOLOGY\n';
+  report += '═══════════════════════════════════════════════════════════════════════════════\n\n';
+  report += `  Target: ${result.target}\n`;
+  report += `  Phases: ${result.phases.length} (Subdomain Enum, Tech Fingerprint, Port Scan, Directory Discovery, Vulnerability Checks)\n`;
+  report += `  Tools: JARVIS Auto-Recon Engine v1.0\n`;
+  report += `  Duration: ${result.endTime ? Math.round((result.endTime - result.startTime) / 1000) : '?'}s\n`;
+  report += `  Subdomains Discovered: ${result.summary.subdomains}\n`;
+  report += `  Open Ports: ${result.summary.openPorts}\n`;
+  report += `  Technologies: ${result.summary.technologies.join(', ') || 'N/A'}\n\n`;
+
+  // Findings Table
+  report += '═══════════════════════════════════════════════════════════════════════════════\n';
+  report += '  FINDINGS OVERVIEW\n';
+  report += '═══════════════════════════════════════════════════════════════════════════════\n\n';
+
+  for (let i = 0; i < data.reports.length; i++) {
+    const r = data.reports[i];
+    const sevIcon = r.severity === 'critical' ? '[!!!]' : r.severity === 'high' ? '[!! ]' : r.severity === 'medium' ? '[!  ]' : '[   ]';
+    report += `  ${String(i + 1).padStart(2)}. ${sevIcon} ${r.title}\n`;
+    report += `      Severity: ${r.severity.toUpperCase()} | CVSS: ${r.cvssScore} | Type: ${r.vulnerabilityType}\n`;
+    report += `      CWE: ${r.classification.cwe}\n\n`;
+  }
+
+  // Individual Reports
+  for (let i = 0; i < data.reports.length; i++) {
+    const r = data.reports[i];
+    report += '\n';
+    report += '═══════════════════════════════════════════════════════════════════════════════\n';
+    report += `  FINDING ${i + 1}: ${r.title.toUpperCase()}\n`;
+    report += '═══════════════════════════════════════════════════════════════════════════════\n\n';
+
+    report += `  Severity:        ${r.severity.toUpperCase()}\n`;
+    report += `  CVSS Score:      ${r.cvssScore}\n`;
+    report += `  CVSS Vector:     ${r.cvssVector}\n`;
+    report += `  Vulnerability:   ${r.vulnerabilityType}\n`;
+    report += `  Target:          ${r.target}\n`;
+    report += `  Endpoint:        ${r.endpoint}\n`;
+    report += `  CWE:             ${r.classification.cwe}\n`;
+    report += `  OWASP:           ${r.classification.owasp}\n\n`;
+
+    report += '  --- SUMMARY ---\n\n';
+    report += `  ${r.summary}\n\n`;
+
+    report += '  --- IMPACT ---\n\n';
+    report += `  ${r.impact}\n\n`;
+
+    report += '  --- STEPS TO REPRODUCE ---\n\n';
+    for (const step of r.stepsToReproduce) {
+      report += `  ${step}\n`;
+    }
+    report += '\n';
+
+    report += '  --- EVIDENCE ---\n\n';
+    for (const ev of r.evidence) {
+      report += `  [${ev.label}]\n`;
+      for (const line of ev.content.split('\n')) {
+        report += `    ${line}\n`;
+      }
+      report += '\n';
+    }
+
+    report += '  --- REMEDIATION ---\n\n';
+    for (const line of r.remediation.split('\n')) {
+      report += `  ${line}\n`;
+    }
+    report += '\n';
+
+    report += '  --- REFERENCES ---\n\n';
+    for (const ref of r.references) {
+      report += `  - ${ref}\n`;
+    }
+    report += '\n';
+  }
+
+  // Footer
+  report += '═══════════════════════════════════════════════════════════════════════════════\n';
+  report += '  END OF REPORT\n';
+  report += '═══════════════════════════════════════════════════════════════════════════════\n\n';
+  report += `  Generated by JARVIS AI — Automated Reconnaissance & Reporting Engine\n`;
+  report += `  Date: ${dateStr} ${timeStr}\n`;
+  report += `  Target: ${result.target}\n`;
+  report += `  This report is ready for submission to HackerOne, Bugcrowd, or Intigriti.\n`;
+
+  return report;
+}
+
 export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
   const [target, setTarget] = useState('');
   const [scanning, setScanning] = useState(false);
@@ -247,13 +367,38 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                         });
                         const data = await res.json();
                         setReportResult(data);
+
+                        // Auto-download all-in-one report
+                        const allInOne = buildAllInOneReport(data, result);
+                        const blob = new Blob([allInOne], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `JARVIS-BugBounty-Report-${result.target}-${new Date().toISOString().split('T')[0]}.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        // Also download individual markdown reports
+                        for (const report of data.reports) {
+                          const mdBlob = new Blob([report.markdown], { type: 'text/markdown' });
+                          const mdUrl = URL.createObjectURL(mdBlob);
+                          const mdA = document.createElement('a');
+                          mdA.href = mdUrl;
+                          mdA.download = `${report.id}-${report.title.substring(0, 40).replace(/[^a-zA-Z0-9]/g, '-')}.md`;
+                          document.body.appendChild(mdA);
+                          mdA.click();
+                          document.body.removeChild(mdA);
+                          URL.revokeObjectURL(mdUrl);
+                        }
                       } catch {}
                       setGeneratingReport(false);
                     }}
                     disabled={generatingReport}
                     className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-all"
                   >
-                    {generatingReport ? 'GENERATING...' : '📄 GENERATE REPORT'}
+                    {generatingReport ? 'GENERATING...' : '📄 GENERATE & DOWNLOAD'}
                   </button>
                 </div>
 
@@ -389,21 +534,41 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
               {reportResult && (
                 <div className="bg-white/[0.02] border border-emerald-500/20 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] tracking-wider text-emerald-400/60">📄 BUG BOUNTY REPORTS ({reportResult.totalReports})</div>
-                    <button
-                      onClick={() => {
-                        const blob = new Blob([reportResult.summary], { type: 'text/plain' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `jarvis-report-${result.target}.txt`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                    >
-                      ⬇ DOWNLOAD ALL
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">✅</span>
+                      <div>
+                        <div className="text-[10px] tracking-wider text-emerald-400/60">BUG BOUNTY REPORTS ({reportResult.totalReports} FINDINGS)</div>
+                        <div className="text-[9px] text-slate-500">Reports downloaded to your Downloads folder</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([reportResult.summary], { type: 'text/plain' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `JARVIS-Summary-${result.target}.txt`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                      >
+                        ⬇ RE-DOWNLOAD ALL
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-500/5 rounded-lg px-3 py-2 mb-3">
+                    <div className="text-[10px] text-emerald-400 mb-1">Files downloaded to your Downloads folder:</div>
+                    <div className="text-[9px] text-slate-500 space-y-0.5">
+                      <div>📄 JARVIS-BugBounty-Report-{result.target}-{new Date().toISOString().split('T')[0]}.txt (All-in-One)</div>
+                      {reportResult.reports.map((r: any) => (
+                        <div key={r.id}>📄 {r.id}-{r.title.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}.md</div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="text-xs text-slate-400 mb-3 bg-emerald-500/5 rounded-lg px-3 py-2 whitespace-pre-wrap font-mono text-[10px] max-h-40 overflow-y-auto">
