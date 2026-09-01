@@ -1035,6 +1035,53 @@ Workflow:
     ],
     relatedTools: ['yara', 'cuckoo', 'floss', 'pestudio', 'flarevm', 'remnux', 'capa'],
   },
+  // BUG BOUNTY
+  {
+    id: 'bug-bounty-methodology',
+    title: 'Bug Bounty Hunting Methodology',
+    category: 'bug-bounty',
+    content: `Bug bounty hunting is the practice of finding and reporting security vulnerabilities in authorized systems for rewards.
+
+Platforms: HackerOne, Bugcrowd, Intigriti, Synack, YesWeHack
+
+Methodology:
+1. Recon: Subdomain enum, tech fingerprinting, port scanning
+2. Discovery: Directory brute force, API endpoint discovery, sensitive file exposure
+3. Testing: XSS, SQLi, IDOR, SSRF, CSRF, authentication bypass
+4. Exploitation: Craft proof-of-concept, demonstrate impact
+5. Reporting: Write clear report with steps, impact, and remediation
+
+High-impact vulnerabilities:
+- RCE (Remote Code Execution): Critical
+- SQL Injection: Critical
+- Authentication Bypass: High
+- IDOR (Insecure Direct Object Reference): Medium-High
+- Stored XSS: Medium-High
+- SSRF (Server-Side Request Forgery): Medium-High
+- Open Redirect: Low-Medium
+
+Recon tools: subfinder, amass, httpx, nuclei, waybackurls, gau, feroxbuster, ffuf
+Testing tools: Burp Suite, SQLMap, XSStrike, Commix, Arjun
+
+Always follow program scope and responsible disclosure rules.`,
+    tags: ['bug', 'bounty', 'hackerone', 'bugcrowd', 'pentest', 'responsible-disclosure', 'recon', 'report'],
+    commands: [
+      'subfinder -d TARGET -silent -all',
+      'httpx -l subdomains.txt -silent -tech-detect -status-code',
+      'nuclei -l urls.txt -t cves/',
+      'ffuf -u TARGET/FUZZ -w wordlist.txt',
+      'waybackurls TARGET | sort -u',
+      'gau TARGET --threads 5',
+      'arjun -u TARGET',
+    ],
+    examples: [
+      'Subdomain recon: subfinder -d target.com -silent -all | httpx -silent',
+      'Directory brute: ffuf -u https://target.com/FUZZ -w /usr/share/wordlists/dirb/common.txt',
+      'Vuln scan: nuclei -u https://target.com -t ~/nuclei-templates/',
+      'API discovery: arjun -u https://target.com/api',
+    ],
+    relatedTools: ['subfinder', 'amass', 'httpx', 'nuclei', 'ffuf', 'burp-suite', 'sqlmap'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
