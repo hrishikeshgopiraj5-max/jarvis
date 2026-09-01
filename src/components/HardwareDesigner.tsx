@@ -154,7 +154,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
             <div className="flex items-center gap-3">
               <div className="hud-value text-sm text-cyan-400/60">[+]</div>
               <div>
-                <div className="hud-text text-cyan-400/30">HARDWARE DESIGNER</div>
+                <div className="hud-text text-cyan-400/70">HARDWARE DESIGNER</div>
                 <div className="hud-value text-sm text-cyan-100/60">JARVIS Blueprint Engine</div>
               </div>
               {analyzing && (
@@ -166,7 +166,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
             </div>
             {!analyzing && (
               <button onClick={onClose}
-                className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 transition-colors">
+                className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 transition-colors">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -180,7 +180,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
             {!result && !analyzing && (
               <div className="px-6 py-8">
                 <div className="text-center mb-8">
-                  <div className="hud-text text-cyan-400/15 mb-3">[BLUEPRINT GENERATOR]</div>
+                  <div className="hud-text text-cyan-400/45 mb-3">[BLUEPRINT GENERATOR]</div>
                   <div className="text-[11px] text-slate-400/50 max-w-lg mx-auto"
                     style={{ fontFamily: 'Courier New, monospace' }}>
                     Describe your hardware project and JARVIS will generate wiring diagrams,
@@ -202,17 +202,17 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
 
                 {/* Quick Start */}
                 <div className="max-w-2xl mx-auto mt-8">
-                  <div className="hud-text text-cyan-400/20 mb-3">QUICK START TEMPLATES</div>
+                  <div className="hud-text text-cyan-400/60 mb-3">QUICK START TEMPLATES</div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {quickProjects.map(project => (
                       <button key={project.name}
                         onClick={() => { setDescription(project.prompt); analyze(project.prompt); }}
                         className="hud-panel rounded p-3 text-left hover:border-cyan-500/15 transition-all group">
-                        <div className="hud-value text-[10px] text-cyan-400/30 group-hover:text-cyan-400/60 mb-1">[{project.label}]</div>
+                        <div className="hud-value text-[10px] text-cyan-400/70 group-hover:text-cyan-400/60 mb-1">[{project.label}]</div>
                         <div className="hud-value text-[11px] text-cyan-100/60 group-hover:text-cyan-100/80 transition-colors">
                           {project.name}
                         </div>
-                        <div className="hud-text text-[7px] text-cyan-400/15 mt-0.5">{project.desc}</div>
+                        <div className="hud-text text-[7px] text-cyan-400/45 mt-0.5">{project.desc}</div>
                       </button>
                     ))}
                   </div>
@@ -227,7 +227,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                   className="w-16 h-16 border border-cyan-500/15 rounded-full"
                   style={{ borderTopColor: 'rgba(0,200,255,0.5)' }} />
                 <div className="mt-4 hud-value text-sm text-cyan-400/60">Designing your blueprint...</div>
-                <div className="mt-1 hud-text text-[8px] text-cyan-400/20">
+                <div className="mt-1 hud-text text-[8px] text-cyan-400/60">
                   ANALYZING COMPONENTS · GENERATING WIRING · CALCULATING POWER
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="hud-value text-sm text-cyan-100/70">{result.analysis.name}</div>
-                      <div className="hud-text text-[8px] text-cyan-400/25">
+                      <div className="hud-text text-[8px] text-cyan-400/65">
                         {result.analysis.components.length} COMPONENTS · {result.analysis.estimatedCost} · {result.analysis.estimatedTime}
                       </div>
                     </div>
@@ -251,7 +251,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                         {result.analysis.complexity.toUpperCase()}
                       </span>
                       <button onClick={() => { setResult(null); setDescription(''); }}
-                        className="px-3 py-1.5 rounded border border-cyan-500/10 text-[9px] text-cyan-400/40 hover:text-cyan-400/60 transition-colors"
+                        className="px-3 py-1.5 rounded border border-cyan-500/25 text-[9px] text-cyan-400/80 hover:text-cyan-400/60 transition-colors"
                         style={{ fontFamily: 'Courier New, monospace' }}>
                         NEW PROJECT
                       </button>
@@ -264,7 +264,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                       { label: 'BUILD TIME', value: result.analysis.estimatedTime },
                     ].map(item => (
                       <div key={item.label} className="bg-cyan-500/[0.02] border border-cyan-500/5 rounded p-2.5 text-center">
-                        <div className="hud-text text-[7px] text-cyan-400/20">{item.label}</div>
+                        <div className="hud-text text-[7px] text-cyan-400/60">{item.label}</div>
                         <div className="hud-value text-[11px] text-cyan-100/60">{item.value}</div>
                       </div>
                     ))}
@@ -278,7 +278,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                       className={`flex-1 py-2 rounded text-[9px] tracking-wider transition-all ${
                         activeTab === tab
                           ? 'bg-cyan-500/8 text-cyan-400/70 border border-cyan-500/15'
-                          : 'text-cyan-400/20 hover:text-cyan-400/40'
+                          : 'text-cyan-400/60 hover:text-cyan-400/80'
                       }`} style={{ fontFamily: 'Courier New, monospace' }}>
                       {tab.toUpperCase()}
                     </button>
@@ -291,29 +291,29 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                     <motion.div key="wiring" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       className="space-y-4">
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">WIRING DIAGRAM</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">WIRING DIAGRAM</div>
                         <div className="bg-[#04060c] rounded p-4 overflow-x-auto border border-cyan-500/5"
                           dangerouslySetInnerHTML={{ __html: result.wiringDiagramSVG }} />
                       </div>
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">CONNECTIONS ({result.analysis.wiring.connections.length})</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">CONNECTIONS ({result.analysis.wiring.connections.length})</div>
                         <div className="space-y-1.5 max-h-60 overflow-y-auto">
                           {result.analysis.wiring.connections.map((conn, i) => (
                             <div key={i} className="flex items-center gap-2 text-[10px]" style={{ fontFamily: 'Courier New, monospace' }}>
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getWireColor(conn.wire) }} />
                               <span className="text-cyan-100/50">{conn.from.component}.{conn.from.pin}</span>
-                              <span className="text-cyan-400/20">--&gt;</span>
+                              <span className="text-cyan-400/60">--&gt;</span>
                               <span className="text-cyan-100/50">{conn.to.component}.{conn.to.pin}</span>
-                              <span className="text-cyan-400/15 ml-auto text-[8px]">{conn.wire}</span>
+                              <span className="text-cyan-400/45 ml-auto text-[8px]">{conn.wire}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">POWER DISTRIBUTION</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">POWER DISTRIBUTION</div>
                         <div className="space-y-1.5">
                           {result.analysis.architecture.powerDistribution.map((dist, i) => (
-                            <div key={i} className="text-[10px] text-cyan-400/30 flex items-start gap-2"
+                            <div key={i} className="text-[10px] text-cyan-400/70 flex items-start gap-2"
                               style={{ fontFamily: 'Courier New, monospace' }}>
                               <span className="text-red-400/40 shrink-0">[PWR]</span>
                               <span>{dist}</span>
@@ -333,7 +333,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                             className={`hud-panel rounded p-3 text-left transition-all ${
                               selectedComponent?.id === comp.id
                                 ? 'border-cyan-500/20 bg-cyan-500/[0.03]'
-                                : 'hover:border-cyan-500/10'
+                                : 'hover:border-cyan-500/25'
                             }`}>
                             <div className="flex items-center gap-2">
                               <span className={`hud-text text-[8px] px-1.5 py-0.5 border rounded ${CATEGORY_CLASSES[comp.category] || ''}`}>
@@ -341,22 +341,22 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                               </span>
                               <div className="flex-1 min-w-0">
                                 <div className="hud-value text-[11px] text-cyan-100/60 truncate">{comp.name}</div>
-                                <div className="hud-text text-[7px] text-cyan-400/15">{comp.voltage} · {comp.price}</div>
+                                <div className="hud-text text-[7px] text-cyan-400/45">{comp.voltage} · {comp.price}</div>
                               </div>
                             </div>
                             {selectedComponent?.id === comp.id && comp.pins && (
                               <div className="mt-3 pt-3 border-t border-cyan-500/5">
-                                <div className="hud-text text-[8px] text-cyan-400/20 mb-2">PINOUT</div>
+                                <div className="hud-text text-[8px] text-cyan-400/60 mb-2">PINOUT</div>
                                 <div className="grid grid-cols-2 gap-1">
                                   {comp.pins.map(pin => (
                                     <div key={pin.name} className="text-[9px]" style={{ fontFamily: 'Courier New, monospace' }}>
                                       <span className="text-cyan-400/50">{pin.name}</span>
-                                      <span className="text-cyan-400/15 ml-1">{pin.type}</span>
+                                      <span className="text-cyan-400/45 ml-1">{pin.type}</span>
                                     </div>
                                   ))}
                                 </div>
                                 {comp.description && (
-                                  <div className="text-[9px] text-cyan-400/20 mt-2">{comp.description}</div>
+                                  <div className="text-[9px] text-cyan-400/60 mt-2">{comp.description}</div>
                                 )}
                               </div>
                             )}
@@ -370,7 +370,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                     <motion.div key="arch" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       className="space-y-4">
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">SYSTEM ARCHITECTURE</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">SYSTEM ARCHITECTURE</div>
                         <div className="flex flex-wrap gap-3 justify-center py-4">
                           {result.analysis.architecture.blocks.map(block => {
                             const typeClasses: Record<string, string> = {
@@ -383,8 +383,8 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                             };
                             return (
                               <div key={block.id}
-                                className={`border rounded p-3 min-w-[120px] text-center ${typeClasses[block.type] || 'border-cyan-500/10'}`}>
-                                <div className="hud-text text-[7px] text-cyan-400/20 uppercase">{block.type}</div>
+                                className={`border rounded p-3 min-w-[120px] text-center ${typeClasses[block.type] || 'border-cyan-500/25'}`}>
+                                <div className="hud-text text-[7px] text-cyan-400/60 uppercase">{block.type}</div>
                                 <div className="hud-value text-[11px] text-cyan-100/60 mt-0.5">{block.name}</div>
                               </div>
                             );
@@ -392,12 +392,12 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                         </div>
                       </div>
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">DATA FLOW</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">DATA FLOW</div>
                         <div className="space-y-2">
                           {result.analysis.architecture.dataFlow.map((flow, i) => (
                             <div key={i} className="flex items-center gap-2 text-[10px] text-cyan-400/35"
                               style={{ fontFamily: 'Courier New, monospace' }}>
-                              <span className="text-cyan-400/25">{i + 1}.</span>
+                              <span className="text-cyan-400/65">{i + 1}.</span>
                               <span>{flow}</span>
                             </div>
                           ))}
@@ -409,7 +409,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                             <div className="hud-text text-orange-400/30 mb-3">[!] RISKS</div>
                             <div className="space-y-1.5">
                               {result.analysis.risks.map((risk, i) => (
-                                <div key={i} className="text-[10px] text-cyan-400/25" style={{ fontFamily: 'Courier New, monospace' }}>
+                                <div key={i} className="text-[10px] text-cyan-400/65" style={{ fontFamily: 'Courier New, monospace' }}>
                                   - {risk}
                                 </div>
                               ))}
@@ -418,10 +418,10 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                         )}
                         {result.analysis.alternatives.length > 0 && (
                           <div className="hud-panel rounded p-4">
-                            <div className="hud-text text-cyan-400/25 mb-3">[~] ALTERNATIVES</div>
+                            <div className="hud-text text-cyan-400/65 mb-3">[~] ALTERNATIVES</div>
                             <div className="space-y-1.5">
                               {result.analysis.alternatives.map((alt, i) => (
-                                <div key={i} className="text-[10px] text-cyan-400/25" style={{ fontFamily: 'Courier New, monospace' }}>
+                                <div key={i} className="text-[10px] text-cyan-400/65" style={{ fontFamily: 'Courier New, monospace' }}>
                                   - {alt}
                                 </div>
                               ))}
@@ -436,7 +436,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                     <motion.div key="assembly" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                       className="space-y-4">
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">ASSEMBLY STEPS</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">ASSEMBLY STEPS</div>
                         <div className="space-y-3">
                           {result.analysis.wiring.assemblySteps.map((step, i) => (
                             <div key={i} className="flex items-start gap-3">
@@ -452,10 +452,10 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
                         </div>
                       </div>
                       <div className="hud-panel rounded p-4">
-                        <div className="hud-text text-cyan-400/25 mb-3">PRO TIPS</div>
+                        <div className="hud-text text-cyan-400/65 mb-3">PRO TIPS</div>
                         <div className="space-y-2">
                           {result.analysis.wiring.tips.map((tip, i) => (
-                            <div key={i} className="text-[10px] text-cyan-400/30 bg-cyan-500/[0.02] rounded px-3 py-2 border border-cyan-500/5"
+                            <div key={i} className="text-[10px] text-cyan-400/70 bg-cyan-500/[0.02] rounded px-3 py-2 border border-cyan-500/5"
                               style={{ fontFamily: 'Courier New, monospace' }}>
                               {tip}
                             </div>
@@ -467,7 +467,7 @@ export default function HardwareDesigner({ isOpen, onClose }: HardwareDesignerPr
 
                   {activeTab === 'bom' && (
                     <motion.div key="bom" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                      <div className="hud-panel rounded p-4 text-[10px] text-cyan-400/25 whitespace-pre-wrap overflow-x-auto"
+                      <div className="hud-panel rounded p-4 text-[10px] text-cyan-400/65 whitespace-pre-wrap overflow-x-auto"
                         style={{ fontFamily: 'Courier New, monospace' }}>
                         {result.bom}
                       </div>

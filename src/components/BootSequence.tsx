@@ -202,6 +202,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   const soundsRef = useRef<ReturnType<typeof createSoundEngine> | null>(null);
 
   const runBoot = useCallback(async () => {
+    cancelledRef.current = false; // Reset cancellation flag
     const sounds = createSoundEngine();
     soundsRef.current = sounds;
 
@@ -243,13 +244,13 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
     await sleep(300);
     if (cancelledRef.current) return;
 
-    // ── Stage 3: System Text Typing ──
+    // ── Stage 3: System Text Typing (fast) ──
     setStage(3);
     for (let i = 0; i < BOOT_LINES.length; i++) {
       if (cancelledRef.current) return;
       const line = BOOT_LINES[i];
 
-      // Type out the line character by character
+      // Type out the line quickly
       const fullText = line.text;
       let currentText = '';
       for (let j = 0; j < fullText.length; j++) {
@@ -260,14 +261,13 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           next[i] = currentText;
           return next;
         });
-        // Tap sound every 3 chars
-        if (j % 3 === 0) sounds.tap();
-        await sleep(8 + Math.random() * 8);
+        if (j % 5 === 0) sounds.tap();
+        await sleep(3 + Math.random() * 3);
       }
 
       sounds.lineComplete();
       setProgressWidth(((i + 1) / BOOT_LINES.length) * 100);
-      await sleep(BOOT_LINES[i].delay);
+      await sleep(30);
     }
     if (cancelledRef.current) return;
 
@@ -289,8 +289,17 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   }, [onComplete]);
 
   useEffect(() => {
+    cancelledRef.current = false;
     runBoot();
-    return () => { cancelledRef.current = true; };
+    return () => {
+      cancelledRef.current = true;
+      // Safety: if boot gets stuck, force complete after 6 seconds
+      setTimeout(() => {
+        if (cancelledRef.current) {
+          onComplete();
+        }
+      }, 6000);
+    };
   }, [runBoot]);
 
   return (
@@ -433,7 +442,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 0.3, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
               className="absolute top-6 left-1/2 -translate-x-1/2">
-              <div className="hud-text text-[9px] text-cyan-400/40 text-center tracking-[0.6em]"
+              <div className="hud-text text-[9px] text-cyan-400/80 text-center tracking-[0.6em]"
                 style={{ fontFamily: 'Courier New, monospace' }}>
                 J.A.R.V.I.S. // JUST A RATHER VERY INTELLIGENT SYSTEM
               </div>
@@ -443,7 +452,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 0.25, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="absolute left-8 top-1/3" style={{ fontFamily: 'Courier New, monospace' }}>
-              <div className="text-[8px] text-cyan-400/30 space-y-1">
+              <div className="text-[8px] text-cyan-400/70 space-y-1">
                 <div>PWR: 100%</div>
                 <div>NET: ONLINE</div>
                 <div>MEM: ACTIVE</div>
@@ -456,7 +465,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 0.25, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
               className="absolute right-8 top-1/3 text-right" style={{ fontFamily: 'Courier New, monospace' }}>
-              <div className="text-[8px] text-cyan-400/30 space-y-1">
+              <div className="text-[8px] text-cyan-400/70 space-y-1">
                 <div>MESH: 182</div>
                 <div>MODELS: 14</div>
                 <div>PROV: 6</div>
@@ -476,7 +485,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
               <div key={i} className="flex items-center gap-2"
                 style={{ fontFamily: 'Courier New, monospace' }}>
                 <span className="text-[8px] text-cyan-500/25">[{String(i + 1).padStart(2, '0')}]</span>
-                <span className="text-[9px] text-cyan-400/40 flex-1">
+                <span className="text-[9px] text-cyan-400/80 flex-1">
                   {line || '\u00A0'}
                   {line && line.length === BOOT_LINES[i]?.text?.length && (
                     <span className="text-emerald-400/60 ml-2">OK</span>
@@ -509,7 +518,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
               </motion.div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.3 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-[9px] text-cyan-400/20 mt-2 tracking-[0.3em]"
+                className="text-[9px] text-cyan-400/60 mt-2 tracking-[0.3em]"
                 style={{ fontFamily: 'Courier New, monospace' }}>
                 READY, SIR
               </motion.div>
@@ -522,11 +531,11 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
       {stage >= 2 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4"
           style={{ fontFamily: 'Courier New, monospace' }}>
-          <div className="text-[7px] text-cyan-400/15 tracking-wider">STARK INDUSTRIES</div>
+          <div className="text-[7px] text-cyan-400/45 tracking-wider">STARK INDUSTRIES</div>
           <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className="text-[7px] text-cyan-400/15 tracking-wider">v3.0</div>
+          <div className="text-[7px] text-cyan-400/45 tracking-wider">v3.0</div>
           <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className={`text-[7px] tracking-wider ${stage >= 4 ? 'text-emerald-400/40' : 'text-cyan-400/15'}`}>
+          <div className={`text-[7px] tracking-wider ${stage >= 4 ? 'text-emerald-400/80' : 'text-cyan-400/45'}`}>
             {stage >= 4 ? 'ONLINE' : 'INITIALIZING'}
           </div>
         </div>

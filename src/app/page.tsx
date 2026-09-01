@@ -55,6 +55,13 @@ export default function JarvisPage() {
   // ── Boot completed callback ────────────────────────────────
   const handleBootComplete = useCallback(() => setBooting(false), []);
 
+  // ── Safety: force-complete boot after 5 seconds ──────────
+  useEffect(() => {
+    if (!booting) return;
+    const timer = setTimeout(() => setBooting(false), 5000);
+    return () => clearTimeout(timer);
+  }, [booting]);
+
   // ── Mounted state (prevents hydration mismatch) ────────────
   useEffect(() => { setMounted(true); }, []);
 
@@ -272,9 +279,9 @@ export default function JarvisPage() {
     const interval = setInterval(() => {
       setWaveLevels(prev => prev.map((_, i) => {
         if (mode === 'listening' || mode === 'speaking') {
-          return 0.08 + Math.abs(Math.sin(Date.now() / 180 + i * 0.35)) * audioLevel * 0.7;
+          return 0.25 + Math.abs(Math.sin(Date.now() / 180 + i * 0.35)) * audioLevel * 0.8;
         }
-        return 0.02 + Math.sin(Date.now() / 2000 + i * 0.25) * 0.015;
+        return 0.15 + Math.sin(Date.now() / 2000 + i * 0.25) * 0.08;
       }));
     }, 50);
     return () => clearInterval(interval);
@@ -325,7 +332,7 @@ export default function JarvisPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-between overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #030508 0%, #040810 30%, #050a14 60%, #04060c 100%)' }}>
+      style={{ background: 'linear-gradient(180deg, #030508 0%, #040a14 30%, #050c18 60%, #040810 100%)' }}>
 
       {/* Hex grid background */}
       <div className="hex-grid" />
@@ -369,7 +376,7 @@ export default function JarvisPage() {
               </div>
               <input type="password" value={setupKey} onChange={e => setSetupKey(e.target.value)}
                 placeholder="sk-or-v1-..."
-                className="w-full bg-transparent border border-cyan-500/15 rounded px-4 py-3 text-sm text-cyan-100 placeholder-slate-600 focus:border-cyan-400/30 transition-all text-center"
+                className="w-full bg-transparent border border-cyan-500/30 rounded px-4 py-3 text-sm text-cyan-100 placeholder-slate-600 focus:border-cyan-400/30 transition-all text-center"
                 style={{ fontFamily: 'Courier New, monospace' }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && setupKey.trim()) {
@@ -411,7 +418,7 @@ export default function JarvisPage() {
       <div className="relative z-10 w-full flex items-center justify-between px-4 md:px-8 pt-4 md:pt-6">
         {/* Left: JARVIS label */}
         <div className="flex items-center gap-3">
-          <div className="hud-text tracking-[0.5em] text-cyan-400/40">J.A.R.V.I.S.</div>
+          <div className="hud-text tracking-[0.5em] text-cyan-300">J.A.R.V.I.S.</div>
           <div className="hidden md:block w-12 h-[1px] bg-gradient-to-r from-cyan-500/20 to-transparent" />
         </div>
 
@@ -430,14 +437,14 @@ export default function JarvisPage() {
           }} />
 
           {/* Time */}
-          <div className="hud-text text-cyan-400/30 text-[10px]">{pcHealth.time}</div>
+          <div className="hud-text text-cyan-400/70 text-[10px]">{pcHealth.time}</div>
 
           {/* Separator */}
           <div className="w-[1px] h-3 bg-cyan-500/10" />
 
           {/* Auto-Recon */}
           <button onClick={() => setReconOpen(true)}
-            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
+            className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
             title="Auto-Recon">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
@@ -448,7 +455,7 @@ export default function JarvisPage() {
 
           {/* Hardware */}
           <button onClick={() => setHardwareOpen(true)}
-            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
+            className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all"
             title="Hardware Designer">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
@@ -457,14 +464,14 @@ export default function JarvisPage() {
 
           {/* Terminal */}
           <button onClick={() => setTerminalOpen(!terminalOpen)}
-            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
+            className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
             title="Terminal">
             {'>'}
           </button>
 
           {/* Info */}
           <button onClick={() => setInfoOpen(!infoOpen)}
-            className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
+            className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all text-[10px] font-mono"
             title="System Info">
             i
           </button>
@@ -474,7 +481,7 @@ export default function JarvisPage() {
       {/* ═══ LEFT HUD PANEL ═══ */}
       <div className="hidden lg:block absolute left-6 top-20 z-10 w-48">
         <div className="hud-panel rounded p-3 hud-animate-in" style={{ animationDelay: '0.1s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">SYSTEM STATUS</div>
+          <div className="hud-text mb-2">SYSTEM STATUS</div>
           <div className="space-y-1.5">
             {[
               { label: 'CORE', value: `${pcHealth.cores} THREADS`, ok: pcHealth.cores > 0 },
@@ -494,7 +501,7 @@ export default function JarvisPage() {
         </div>
 
         <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.2s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">VOICE INPUT</div>
+          <div className="hud-text mb-2">VOICE INPUT</div>
           <div className="flex items-center gap-2">
             <div className={`w-1.5 h-1.5 rounded-full ${
               mode === 'listening' ? 'bg-green-400' : mode === 'speaking' ? 'bg-cyan-400' : 'bg-slate-600'
@@ -509,23 +516,23 @@ export default function JarvisPage() {
         </div>
 
         <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.3s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">NEURAL MESH</div>
+          <div className="hud-text mb-2">NEURAL MESH</div>
           <div className="grid grid-cols-3 gap-1">
             {['GEM', 'CLD', 'GPT', 'DSK', 'MTA', 'QWN'].map(p => (
-              <div key={p} className="text-center py-1 border border-cyan-500/8 rounded text-[8px] text-cyan-400/40"
+              <div key={p} className="text-center py-1 border border-cyan-500/20 rounded text-[8px] text-cyan-400/80"
                 style={{ fontFamily: 'Courier New, monospace' }}>
                 {p}
               </div>
             ))}
           </div>
-          <div className="hud-text text-[7px] mt-2 text-cyan-400/20">182 NODE LINKS ACTIVE</div>
+          <div className="text-[7px] mt-2" style={{ fontFamily: 'Courier New, monospace', color: 'rgba(0,220,255,0.4)' }}>182 NODE LINKS ACTIVE</div>
         </div>
       </div>
 
       {/* ═══ RIGHT HUD PANEL ═══ */}
       <div className="hidden lg:block absolute right-6 top-20 z-10 w-48">
         <div className="hud-panel rounded p-3 hud-animate-in" style={{ animationDelay: '0.15s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">CAPABILITIES</div>
+          <div className="hud-text mb-2">CAPABILITIES</div>
           <div className="space-y-1">
             {[
               { label: 'VOICE RECOGNITION', status: 'ACTIVE' },
@@ -543,10 +550,10 @@ export default function JarvisPage() {
         </div>
 
         <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.25s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">KNOWLEDGE DOMAINS</div>
+          <div className="hud-text mb-2">KNOWLEDGE DOMAINS</div>
           <div className="flex flex-wrap gap-1">
             {['RECON', 'WEB SEC', 'EXPLOIT', 'CRYPTO', 'WIRELESS', 'FORENSICS', 'SOCIAL', 'CAD', 'BUG BOUNTY'].map(cat => (
-              <span key={cat} className="px-1.5 py-0.5 border border-cyan-500/8 text-[7px] text-cyan-400/30"
+              <span key={cat} className="px-1.5 py-0.5 border border-cyan-500/20 text-[7px] text-cyan-400/70"
                 style={{ fontFamily: 'Courier New, monospace' }}>
                 {cat}
               </span>
@@ -555,12 +562,12 @@ export default function JarvisPage() {
         </div>
 
         <div className="hud-panel rounded p-3 mt-2 hud-animate-in" style={{ animationDelay: '0.35s' }}>
-          <div className="hud-text text-cyan-400/30 mb-2">QUICK COMMANDS</div>
+          <div className="hud-text mb-2">QUICK COMMANDS</div>
           <div className="space-y-1">
             {['FIND BUG BOUNTY TARGETS', 'SCAN NETWORK', 'BUILD AI AGENT', 'CREATE PITCH DECK'].map(cmd => (
               <button key={cmd}
                 onClick={() => { processMessage(cmd.toLowerCase()); }}
-                className="block w-full text-left hud-value text-[8px] text-cyan-400/30 hover:text-cyan-400/60 transition-colors py-0.5 truncate">
+                className="block w-full text-left hud-value text-[8px] text-cyan-400/70 hover:text-cyan-400/60 transition-colors py-0.5 truncate">
                 &gt; {cmd}
               </button>
             ))}
@@ -572,8 +579,8 @@ export default function JarvisPage() {
       <div className="relative z-10 flex-1 flex items-center justify-center">
         {/* Holographic Globe — behind arc reactor */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <WireframeGlobe size={600} speed={0.6} opacity={0.1} mode={mode} className="hidden md:block" />
-          <WireframeGlobe size={380} speed={0.6} opacity={0.08} mode={mode} className="md:hidden" />
+          <WireframeGlobe size={600} speed={0.6} opacity={0.2} mode={mode} className="hidden md:block" />
+          <WireframeGlobe size={380} speed={0.6} opacity={0.15} mode={mode} className="md:hidden" />
         </div>
 
         <div className="relative">
@@ -581,8 +588,8 @@ export default function JarvisPage() {
           <div className="absolute -inset-32 rounded-full pointer-events-none"
             style={{
               background: mode === 'thinking'
-                ? 'radial-gradient(circle, rgba(255,180,0,0.04) 0%, transparent 60%)'
-                : 'radial-gradient(circle, rgba(0,180,255,0.04) 0%, transparent 60%)',
+                ? 'radial-gradient(circle, rgba(255,180,0,0.1) 0%, transparent 60%)'
+                : 'radial-gradient(circle, rgba(0,180,255,0.1) 0%, transparent 60%)',
               transition: 'all 1s ease',
             }} />
 
@@ -634,7 +641,7 @@ export default function JarvisPage() {
           <motion.div className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap"
             animate={{ opacity: mode === 'idle' ? 0.4 : 1 }}>
             <div className={`hud-text-bright tracking-[0.4em] text-[10px] ${
-              wakeDetected ? 'text-cyan-300' : 'text-cyan-400/40'
+              wakeDetected ? 'text-cyan-300' : 'text-cyan-400/80'
             }`}>
               {status}
             </div>
@@ -643,7 +650,7 @@ export default function JarvisPage() {
           {/* Response time */}
           {responseTime > 0 && mode === 'speaking' && (
             <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
-              <div className="hud-text text-[8px] text-cyan-400/20">RESPONSE DELIVERED</div>
+              <div className="hud-text text-[8px] text-cyan-400/60">RESPONSE DELIVERED</div>
             </div>
           )}
         </div>
@@ -681,8 +688,8 @@ export default function JarvisPage() {
             const ratio = i / waveBars;
             const isActive = mode === 'listening' || mode === 'speaking';
             const color = isActive
-              ? `rgba(0, 200, 255, ${0.15 + level * 0.5})`
-              : `rgba(0, 150, 200, ${0.05 + level * 0.1})`;
+              ? `rgba(0, 220, 255, ${0.35 + level * 0.6})`
+              : `rgba(0, 180, 220, ${0.15 + level * 0.25})`;
             return (
               <div key={i} className="wave-bar flex-1 rounded-full"
                 style={{
@@ -698,7 +705,7 @@ export default function JarvisPage() {
         <div className="flex items-center justify-center gap-3">
           {/* Chat toggle */}
           <button onClick={() => setChatOpen(!chatOpen)}
-            className="w-10 h-10 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all">
+            className="w-10 h-10 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 hover:border-cyan-500/25 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
@@ -708,7 +715,7 @@ export default function JarvisPage() {
           <form onSubmit={handleTextSubmit} className="flex-1 max-w-md">
             <input ref={inputRef} type="text" value={inputText} onChange={e => setInputText(e.target.value)}
               placeholder="Type a command or say Hey Jarvis..."
-              className="w-full bg-transparent border border-cyan-500/10 rounded px-4 py-2.5 text-[11px] text-cyan-100/80 placeholder-slate-600/50 focus:border-cyan-400/25 transition-all"
+              className="w-full bg-transparent border border-cyan-500/25 rounded px-4 py-2.5 text-[11px] text-cyan-100/80 placeholder-slate-600/50 focus:border-cyan-400/25 transition-all"
               style={{ fontFamily: 'Courier New, monospace' }}
               disabled={mode === 'thinking'}
               onFocus={handleInputFocus}
@@ -732,7 +739,7 @@ export default function JarvisPage() {
                 ? 'border-amber-500/20 bg-amber-500/5 text-amber-400/60'
                 : mode === 'speaking'
                 ? 'border-cyan-500/20 bg-cyan-500/5 text-cyan-400/60'
-                : 'border-cyan-500/10 text-cyan-400/30 hover:border-cyan-500/25 hover:text-cyan-400/50'
+                : 'border-cyan-500/25 text-cyan-400/70 hover:border-cyan-500/25 hover:text-cyan-400/50'
             }`}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -744,11 +751,11 @@ export default function JarvisPage() {
 
         {/* Bottom status bar */}
         <div className="flex items-center justify-center gap-4 mt-3">
-          <div className="hud-text text-[7px] text-cyan-400/15">J.A.R.V.I.S. v3.0</div>
+          <div className="hud-text text-[7px] text-cyan-400/45">J.A.R.V.I.S. v3.0</div>
           <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className="hud-text text-[7px] text-cyan-400/15">STARK INDUSTRIES</div>
+          <div className="hud-text text-[7px] text-cyan-400/45">STARK INDUSTRIES</div>
           <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className="hud-text text-[7px] text-cyan-400/15">NEURAL MESH ACTIVE</div>
+          <div className="hud-text text-[7px] text-cyan-400/45">NEURAL MESH ACTIVE</div>
         </div>
       </div>
 
@@ -769,11 +776,11 @@ export default function JarvisPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <div className="hud-text text-cyan-400/30">SYSTEM OVERVIEW</div>
+                    <div className="hud-text">SYSTEM OVERVIEW</div>
                     <div className="hud-value text-lg text-cyan-100/80 mt-1">J.A.R.V.I.S. Dashboard</div>
                   </div>
                   <button onClick={() => setInfoOpen(false)}
-                    className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 transition-colors">
+                    className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 transition-colors">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
@@ -788,7 +795,7 @@ export default function JarvisPage() {
 
                 {/* PC Health */}
                 <div className="hud-panel rounded p-4 mb-4">
-                  <div className="hud-text text-cyan-400/30 mb-3">SYSTEM DIAGNOSTICS</div>
+                  <div className="hud-text mb-3">SYSTEM DIAGNOSTICS</div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
                       { label: 'CPU CORES', value: pcHealth.cores || '--' },
@@ -798,8 +805,8 @@ export default function JarvisPage() {
                       { label: 'NETWORK', value: pcHealth.online ? 'ONLINE' : 'OFFLINE' },
                       { label: 'SESSION UPTIME', value: pcHealth.uptime },
                     ].map(item => (
-                      <div key={item.label} className="bg-cyan-500/[0.02] border border-cyan-500/5 rounded p-2.5">
-                        <div className="hud-text text-[8px] mb-1">{item.label}</div>
+                      <div key={item.label} className="bg-cyan-500/[0.06] border border-cyan-500/15 rounded p-2.5">
+                        <div className="text-[8px] mb-1" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '0.1em', color: 'rgba(0,220,255,0.65)' }}>{item.label}</div>
                         <div className="hud-value text-[11px]">{item.value}</div>
                       </div>
                     ))}
@@ -808,28 +815,28 @@ export default function JarvisPage() {
 
                 {/* Neural Mesh */}
                 <div className="hud-panel rounded p-4 mb-4">
-                  <div className="hud-text text-cyan-400/30 mb-3">NEURAL MESH -- 14 MODELS, 6 PROVIDERS</div>
+                  <div className="hud-text mb-3">NEURAL MESH -- 14 MODELS, 6 PROVIDERS</div>
                   <div className="flex flex-wrap gap-2">
                     {['Google', 'Anthropic', 'OpenAI', 'DeepSeek', 'Meta', 'Qwen'].map(p => (
-                      <span key={p} className="px-3 py-1 rounded border border-cyan-500/15 text-[10px] text-cyan-400/60"
+                      <span key={p} className="px-3 py-1 rounded border border-cyan-500/30 text-[10px] text-cyan-400/60"
                         style={{ fontFamily: 'Courier New, monospace' }}>
                         {p}
                       </span>
                     ))}
                   </div>
-                  <div className="hud-text text-[8px] mt-2 text-cyan-400/15">182 NODE-TO-NODE CONNECTIONS</div>
+                  <div className="hud-text text-[8px] mt-2 text-cyan-400/45">182 NODE-TO-NODE CONNECTIONS</div>
                 </div>
 
                 {/* What JARVIS Can Do */}
                 <div>
-                  <div className="hud-text text-cyan-400/30 mb-3">CAPABILITIES</div>
+                  <div className="hud-text mb-3">CAPABILITIES</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {trendingIdeas.map(idea => (
                       <button key={idea.title}
                         onClick={() => { setInfoOpen(false); processMessage(`Help me with: ${idea.title}`); }}
                         className="hud-panel rounded p-3 text-left hover:border-cyan-500/20 transition-all group">
                         <div className="flex items-start gap-3">
-                          <span className="hud-value text-sm text-cyan-400/30 group-hover:text-cyan-400/60 mt-0.5 w-5 text-center">
+                          <span className="hud-value text-sm text-cyan-400/70 group-hover:text-cyan-400/60 mt-0.5 w-5 text-center">
                             {idea.icon}
                           </span>
                           <div className="flex-1 min-w-0">
@@ -837,7 +844,7 @@ export default function JarvisPage() {
                               <span className="hud-value text-[11px] text-cyan-100/60 group-hover:text-cyan-100/90 transition-colors">
                                 {idea.title}
                               </span>
-                              <span className="text-[7px] px-1 py-0.5 border border-cyan-500/10 text-cyan-400/25"
+                              <span className="text-[7px] px-1 py-0.5 border border-cyan-500/25 text-cyan-400/65"
                                 style={{ fontFamily: 'Courier New, monospace' }}>
                                 {idea.tag}
                               </span>
@@ -860,24 +867,24 @@ export default function JarvisPage() {
         {terminalOpen && (
           <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute bottom-0 left-0 right-0 h-[40vh] bg-[#04060c]/95 backdrop-blur-xl border-t border-cyan-500/10 flex flex-col z-50">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/5">
+            className="absolute bottom-0 left-0 right-0 h-[40vh] bg-[#04060c]/95 backdrop-blur-xl border-t border-cyan-500/25 flex flex-col z-50">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-cyan-500/15">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-red-500/40" />
                   <div className="w-2 h-2 rounded-full bg-amber-500/40" />
                   <div className="w-2 h-2 rounded-full bg-emerald-500/40" />
                 </div>
-                <span className="hud-text text-[9px] text-cyan-400/30">TERMINAL</span>
+                <span className="hud-text text-[9px] text-cyan-400/70">TERMINAL</span>
               </div>
               <button onClick={() => setTerminalOpen(false)}
-                className="hud-text text-[8px] text-cyan-400/20 hover:text-cyan-400/50 transition-colors">
+                className="hud-text text-[8px] text-cyan-400/60 hover:text-cyan-400/50 transition-colors">
                 CLOSE
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] space-y-1">
               {terminalLines.length === 0 && (
-                <div className="text-cyan-400/10 text-center mt-12 text-[10px]">
+                <div className="text-cyan-400/40 text-center mt-12 text-[10px]">
                   Terminal output will appear here when commands are executed.
                 </div>
               )}
@@ -885,7 +892,7 @@ export default function JarvisPage() {
                 <div key={i} className={`flex items-start gap-2 ${
                   line.type === 'cmd' ? 'text-emerald-400/70' :
                   line.type === 'err' ? 'text-red-400/70' :
-                  line.type === 'info' ? 'text-cyan-400/40' :
+                  line.type === 'info' ? 'text-cyan-400/80' :
                   'text-slate-400/60'
                 }`}>
                   {line.type === 'cmd' && <span className="text-emerald-500/30">$</span>}
@@ -893,7 +900,7 @@ export default function JarvisPage() {
                 </div>
               ))}
             </div>
-            <div className="px-4 py-2 border-t border-cyan-500/5">
+            <div className="px-4 py-2 border-t border-cyan-500/15">
               <form onSubmit={e => {
                 e.preventDefault();
                 const input = (e.target as any).elements.cmd;
@@ -919,15 +926,15 @@ export default function JarvisPage() {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="absolute right-0 top-0 h-full w-[360px] max-w-[85vw] flex flex-col z-50"
             style={{ background: 'rgba(4,6,12,0.95)', borderLeft: '1px solid rgba(0,200,255,0.05)' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-500/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-500/15">
               <div>
-                <div className="hud-text text-cyan-400/40">CONVERSATION LOG</div>
+                <div className="hud-text text-cyan-400/80">CONVERSATION LOG</div>
                 <div className="text-[9px] text-slate-600 mt-0.5" style={{ fontFamily: 'Courier New, monospace' }}>
                   {messages.length} ENTRIES
                 </div>
               </div>
               <button onClick={() => setChatOpen(false)}
-                className="w-7 h-7 rounded border border-cyan-500/10 flex items-center justify-center text-cyan-400/30 hover:text-cyan-400/60 transition-colors">
+                className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/60 transition-colors">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -935,11 +942,11 @@ export default function JarvisPage() {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
               {messages.length === 0 && (
-                <div className="text-center text-cyan-400/15 text-[10px] mt-12"
+                <div className="text-center text-cyan-400/45 text-[10px] mt-12"
                   style={{ fontFamily: 'Courier New, monospace' }}>
-                  <div className="mb-3 text-lg text-cyan-400/10">[ ]</div>
+                  <div className="mb-3 text-lg text-cyan-400/40">[ ]</div>
                   <p>INITIATE CONVERSATION</p>
-                  <p className="mt-1 text-cyan-400/10">&quot;Hey Jarvis&quot; or type below</p>
+                  <p className="mt-1 text-cyan-400/40">&quot;Hey Jarvis&quot; or type below</p>
                 </div>
               )}
               {messages.map((msg, i) => (
@@ -947,8 +954,8 @@ export default function JarvisPage() {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] px-3 py-2 rounded ${
                     msg.role === 'user'
-                      ? 'border border-cyan-500/15 bg-cyan-500/5'
-                      : 'border border-cyan-500/8 bg-cyan-500/[0.02]'
+                      ? 'border border-cyan-500/30 bg-cyan-500/5'
+                      : 'border border-cyan-500/20 bg-cyan-500/[0.06]'
                   }`}>
                     <div className="text-[11px] text-cyan-100/50 leading-relaxed"
                       style={{ fontFamily: 'Courier New, monospace' }}>
@@ -963,7 +970,7 @@ export default function JarvisPage() {
               ))}
               {mode === 'thinking' && (
                 <div className="flex justify-start">
-                  <div className="px-3 py-2 rounded border border-cyan-500/8 bg-cyan-500/[0.02]">
+                  <div className="px-3 py-2 rounded border border-cyan-500/20 bg-cyan-500/[0.06]">
                     <div className="flex gap-2">
                       {[0, 1, 2].map(i => (
                         <motion.div key={i}
@@ -977,17 +984,17 @@ export default function JarvisPage() {
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="px-4 py-3 border-t border-cyan-500/5">
+            <div className="px-4 py-3 border-t border-cyan-500/15">
               <form onSubmit={handleTextSubmit} className="flex gap-2">
                 <input type="text" value={inputText} onChange={e => setInputText(e.target.value)}
                   placeholder="Enter command..."
-                  className="flex-1 bg-transparent border border-cyan-500/10 rounded px-3 py-2 text-[11px] text-cyan-100/60 placeholder-slate-600/40 focus:border-cyan-500/25 transition-colors"
+                  className="flex-1 bg-transparent border border-cyan-500/25 rounded px-3 py-2 text-[11px] text-cyan-100/60 placeholder-slate-600/40 focus:border-cyan-500/25 transition-colors"
                   style={{ fontFamily: 'Courier New, monospace' }}
                   disabled={mode === 'thinking'}
                   onFocus={handleInputFocus}
                   onBlur={handleInputBlur} />
                 <button type="submit" disabled={!inputText.trim() || mode === 'thinking'}
-                  className="w-9 h-9 rounded border border-cyan-500/15 flex items-center justify-center text-cyan-400/40 hover:bg-cyan-500/5 disabled:opacity-15 transition-all">
+                  className="w-9 h-9 rounded border border-cyan-500/30 flex items-center justify-center text-cyan-400/80 hover:bg-cyan-500/5 disabled:opacity-15 transition-all">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
