@@ -17,6 +17,7 @@ const WAKE_WORDS = ['hey jarvis', 'jarvis', 'hey jervis', 'jervis'];
 const MSG_EXPIRY_MS = 15000;
 
 export default function JarvisPage() {
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<OrbMode>('idle');
   const [booting, setBooting] = useState(true);
   const [setupOpen, setSetupOpen] = useState(false);
@@ -53,6 +54,9 @@ export default function JarvisPage() {
 
   // ── Boot completed callback ────────────────────────────────
   const handleBootComplete = useCallback(() => setBooting(false), []);
+
+  // ── Mounted state (prevents hydration mismatch) ────────────
+  useEffect(() => { setMounted(true); }, []);
 
   // ── Check API key ──────────────────────────────────────────
   useEffect(() => {
@@ -313,6 +317,11 @@ export default function JarvisPage() {
   // ── Arc Reactor SVG segments ───────────────────────────────
   const segmentsOuter = Array.from({ length: 12 }, (_, i) => i * 30);
   const segmentsInner = Array.from({ length: 8 }, (_, i) => i * 45);
+
+  if (!mounted) return (
+    <div className="fixed inset-0 flex items-center justify-center"
+      style={{ background: '#020306' }} />
+  );
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-between overflow-hidden"
