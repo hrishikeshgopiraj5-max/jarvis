@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessage } from '@/lib/ai';
 import AutoRecon from '@/components/AutoRecon';
+import HardwareDesigner from '@/components/HardwareDesigner';
 
 // ═══════════════════════════════════════════════════════════════
 // JARVIS v2 — Always listening. Responds on "Hey Jarvis".
@@ -47,6 +48,7 @@ export default function JarvisPage() {
   const [error, setError] = useState('');
   const [orbPulse, setOrbPulse] = useState(0);
   const [reconOpen, setReconOpen] = useState(false);
+  const [hardwareOpen, setHardwareOpen] = useState(false);
 
   const [pcHealth, setPcHealth] = useState({
     cores: 0, memory: '', platform: '', language: '',
@@ -474,6 +476,12 @@ export default function JarvisPage() {
               <line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
             </svg>
           </button>
+          <button onClick={() => setHardwareOpen(true)}
+            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-orange-400 hover:border-orange-500/30 transition-all text-xs" title="Hardware Designer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+          </button>
           <button onClick={() => setTerminalOpen(!terminalOpen)}
             className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all text-xs font-mono">
             {'>'}
@@ -828,6 +836,9 @@ export default function JarvisPage() {
 
       {/* Auto-Recon Panel */}
       <AutoRecon isOpen={reconOpen} onClose={() => setReconOpen(false)} />
+
+      {/* Hardware Designer Panel */}
+      <HardwareDesigner isOpen={hardwareOpen} onClose={() => setHardwareOpen(false)} />
     </div>
   );
 }
