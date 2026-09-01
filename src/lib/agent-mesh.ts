@@ -277,7 +277,7 @@ export type AgentIntent =
 const INTENT_PATTERNS: Record<AgentIntent, RegExp[]> = {
   code: [
     /\b(code|program|script|function|class|debug|compile|syntax|api|implement|refactor|error|fix|algorithm|github|repo|commit|deploy|npm|pip|cargo|docker|kubernetes|k8s)\b/i,
-    /\b(python|javascript|typescript|rust|golang|java|c\+\+|html|css|sql|jsx|tsx|vue|svelte)\b/i,
+    /\b(python|javascript|typescript|rust|golang|java|c\+\+|html|css|jsx|tsx|vue|svelte)\b/i,
     /\b(write|create|build|make)\s+(a\s+)?(script|program|function|class|app|website|component|module)\b/i,
   ],
   reasoning: [

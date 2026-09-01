@@ -5,7 +5,7 @@ import { learnFromCommand, learnFromChain, getSmartSuggestions, suggestNextSteps
 
 export async function POST(request: Request) {
   try {
-    const { message, conversation, apiKey: clientApiKey } = await request.json();
+    const { message, conversation = [], apiKey: clientApiKey } = await request.json();
 
     const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 

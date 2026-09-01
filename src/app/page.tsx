@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessage } from '@/lib/ai';
+import AutoRecon from '@/components/AutoRecon';
 
 // ═══════════════════════════════════════════════════════════════
 // JARVIS v2 — Always listening. Responds on "Hey Jarvis".
@@ -45,6 +46,7 @@ export default function JarvisPage() {
   const [wakeDetected, setWakeDetected] = useState(false);
   const [error, setError] = useState('');
   const [orbPulse, setOrbPulse] = useState(0);
+  const [reconOpen, setReconOpen] = useState(false);
 
   const [pcHealth, setPcHealth] = useState({
     cores: 0, memory: '', platform: '', language: '',
@@ -464,6 +466,14 @@ export default function JarvisPage() {
             'bg-slate-600'
           }`} />
           <div className="text-[10px] tracking-wider text-slate-600 font-mono">{pcHealth.time}</div>
+          <button onClick={() => setReconOpen(true)}
+            className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-cyan-400 hover:border-cyan-500/30 transition-all text-xs" title="Auto-Recon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
+              <line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
+            </svg>
+          </button>
           <button onClick={() => setTerminalOpen(!terminalOpen)}
             className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-500 hover:text-emerald-400 hover:border-emerald-500/30 transition-all text-xs font-mono">
             {'>'}
@@ -815,6 +825,9 @@ export default function JarvisPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Auto-Recon Panel */}
+      <AutoRecon isOpen={reconOpen} onClose={() => setReconOpen(false)} />
     </div>
   );
 }
