@@ -276,7 +276,7 @@ export type AgentIntent =
 
 const INTENT_PATTERNS: Record<AgentIntent, RegExp[]> = {
   code: [
-    /\b(code|program|script|function|class|debug|compile|syntax|api|implement|refactor|bug|error|fix|algorithm|github|repo|commit|deploy|npm|pip|cargo|docker|kubernetes|k8s)\b/i,
+    /\b(code|program|script|function|class|debug|compile|syntax|api|implement|refactor|error|fix|algorithm|github|repo|commit|deploy|npm|pip|cargo|docker|kubernetes|k8s)\b/i,
     /\b(python|javascript|typescript|rust|golang|java|c\+\+|html|css|sql|jsx|tsx|vue|svelte)\b/i,
     /\b(write|create|build|make)\s+(a\s+)?(script|program|function|class|app|website|component|module)\b/i,
   ],
@@ -294,6 +294,8 @@ const INTENT_PATTERNS: Record<AgentIntent, RegExp[]> = {
   ],
   hacking: [
     /\b(hack|penetration|pentest|vulnerability|exploit|cybersecurity|firewall|nmap|burp|sql injection|xss|csrf|brute|reverse engineer|metasploit|wireshark|recon|osint|subdomain|port scan|kali|phishing|social engineering|malware|reverse shell|payload|exploit|0day|zero.?day|privilege escalation|buffer overflow)\b/i,
+    /\b(bug bounty|bounty program|target|scan|attack|breach|intrusion|compromise|infiltrate)\b/i,
+    /\b(penetration test|security test|vulnerability scan|security audit|red team|ethical hack)\b/i,
   ],
   command: [
     /\b(run|execute|scan|test|check|start|stop|install|download|upload|send|connect|ping|trace|probe|fuzz)\b/i,
