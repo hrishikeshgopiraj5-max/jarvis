@@ -6,6 +6,7 @@ import { sendChatMessage } from '@/lib/ai';
 import AutoRecon from '@/components/AutoRecon';
 import HardwareDesigner from '@/components/HardwareDesigner';
 import BootSequence from '@/components/BootSequence';
+import WireframeGlobe from '@/components/WireframeGlobe';
 
 // ═══════════════════════════════════════════════════════════════
 // JARVIS v3 — IRON MAN HUD INTERFACE
@@ -560,6 +561,12 @@ export default function JarvisPage() {
 
       {/* ═══ CENTER ARC REACTOR ═══ */}
       <div className="relative z-10 flex-1 flex items-center justify-center">
+        {/* Holographic Globe — behind arc reactor */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <WireframeGlobe size={600} speed={0.6} opacity={0.1} mode={mode} className="hidden md:block" />
+          <WireframeGlobe size={380} speed={0.6} opacity={0.08} mode={mode} className="md:hidden" />
+        </div>
+
         <div className="relative">
           {/* Ambient glow behind reactor */}
           <div className="absolute -inset-32 rounded-full pointer-events-none"
