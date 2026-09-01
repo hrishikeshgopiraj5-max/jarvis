@@ -1082,6 +1082,57 @@ Always follow program scope and responsible disclosure rules.`,
     ],
     relatedTools: ['subfinder', 'amass', 'httpx', 'nuclei', 'ffuf', 'burp-suite', 'sqlmap'],
   },
+  // TARGET DISCOVERY
+  {
+    id: 'target-discovery',
+    title: 'Bug Bounty Target Discovery',
+    category: 'bug-bounty',
+    content: `Finding the right targets is crucial for bug bounty success.
+
+Platforms with public programs:
+- HackerOne: hackerone.com/discovery
+- Bugcrowd: bugcrowd.com/programs
+- Intigriti: intigriti.com/programs
+- YesWeHack: yeswehack.com/programs
+
+Target selection criteria:
+1. Scope size: Larger scope = more attack surface
+2. Tech stack: Choose technologies you know
+3. Bounty range: Higher bounties attract more hunters
+4. Competition: Less popular = easier to find bugs
+5. Recent updates: Fresh targets have fewer researchers
+
+Recon workflow:
+1. Fetch program scope from platform
+2. Enumerate subdomains (subfinder, amass)
+3. Fingerprint technologies (httpx, whatweb)
+4. Discover endpoints (waybackurls, gau)
+5. Find exposed files (dirsearch, feroxbuster)
+6. Scan for vulns (nuclei, sqlmap)
+
+Common beginner targets:
+- Starbucks (easy scope, good bounties)
+- HackerOne itself (learn the platform)
+- PortSwigger (security-focused)
+- GitLab (development tools)
+
+Use JARVIS to automate: /api/targets?skill=beginner`,
+    tags: ['bug', 'bounty', 'target', 'discovery', 'hackerone', 'bugcrowd', 'scope', 'recon'],
+    commands: [
+      'curl -s "https://api.github.com/search/repositories?q=bug+bounty"',
+      'subfinder -d TARGET -silent',
+      'httpx -l subdomains.txt -silent -tech-detect',
+      'waybackurls TARGET | sort -u',
+      'gau TARGET --threads 5',
+      'nuclei -l urls.txt -t cves/',
+    ],
+    examples: [
+      'Fetch programs: curl https://api.example.com/programs',
+      'Recon workflow: subfinder -d target.com | httpx | nuclei',
+      'Endpoint discovery: waybackurls target.com | grep -i api',
+    ],
+    relatedTools: ['subfinder', 'amass', 'httpx', 'nuclei', 'waybackurls', 'gau'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
