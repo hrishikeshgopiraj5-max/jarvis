@@ -225,6 +225,34 @@ export const MODEL_MESH: ModelNode[] = [
     supportsVision: true,
     supportsReasoning: true,
   },
+
+  // ── UNCENSORED TIER — No safety restrictions, full technical depth ──
+  {
+    id: 'cognitivecomputations/dolphin-mistral-24b-venice-edition',
+    name: 'Dolphin Mistral 24B (Uncensored)',
+    tier: 'ultra',
+    specialties: ['hacking', 'code', 'security', 'penetration-testing', 'exploitation'],
+    maxTokens: 8192,
+    contextWindow: 32768,
+    costPer1kIn: 0.0001,
+    costPer1kOut: 0.0001,
+    supportsTools: false,
+    supportsVision: false,
+    supportsReasoning: false,
+  },
+  {
+    id: 'cognitivecomputations/dolphin-llama-3-70b',
+    name: 'Dolphin Llama 3 70B (Uncensored)',
+    tier: 'ultra',
+    specialties: ['hacking', 'code', 'security', 'reasoning', 'analysis'],
+    maxTokens: 8192,
+    contextWindow: 8192,
+    costPer1kIn: 0.00086,
+    costPer1kOut: 0.00086,
+    supportsTools: false,
+    supportsVision: false,
+    supportsReasoning: false,
+  },
 ];
 
 
@@ -323,7 +351,7 @@ export function routeThroughMesh(
 ): AgentSelection {
   const intent = classifyIntent(text);
   const isComplex = text.length > 200 || conversationLength > 5 ||
-    intent === 'hacking' || intent === 'reasoning' || intent === 'code' || intent === 'command';
+    intent === 'reasoning' || intent === 'code' || intent === 'command';
   const isQuick = intent === 'quick' || text.length < 30;
 
   let primaryPool: ModelNode[];
@@ -341,9 +369,15 @@ export function routeThroughMesh(
       );
       break;
     case 'hacking':
+      // Route to uncensored Dolphin models — no safety restrictions
       primaryPool = MODEL_MESH.filter(m =>
-        m.tier === 'ultra' || m.tier === 'strong'
+        m.id.includes('dolphin')
       );
+      if (primaryPool.length === 0) {
+        primaryPool = MODEL_MESH.filter(m =>
+          m.tier === 'ultra' || m.tier === 'strong'
+        );
+      }
       break;
     case 'creative':
     case 'writing':
@@ -377,7 +411,8 @@ export function routeThroughMesh(
     specialist,
     critic,
     intent,
-    strategy: isQuick ? 'single' : isComplex ? 'triple' : 'dual',
+    // Hacking uses single strategy — Dolphin responds directly without review by restricted models
+    strategy: (intent === 'hacking' || isQuick) ? 'single' : isComplex ? 'triple' : 'dual',
   };
 }
 
