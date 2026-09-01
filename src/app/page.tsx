@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessage } from '@/lib/ai';
 import AutoRecon from '@/components/AutoRecon';
 import HardwareDesigner from '@/components/HardwareDesigner';
+import BootSequence from '@/components/BootSequence';
 
 // ═══════════════════════════════════════════════════════════════
 // JARVIS v3 — IRON MAN HUD INTERFACE
@@ -14,22 +15,9 @@ type OrbMode = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
 const WAKE_WORDS = ['hey jarvis', 'jarvis', 'hey jervis', 'jervis'];
 const MSG_EXPIRY_MS = 15000;
 
-const BOOT_SEQUENCE = [
-  { text: 'STARK INDUSTRIES // NEURAL MESH INITIALIZATION', delay: 300 },
-  { text: 'ARK REACTOR POWER CORE ................ ONLINE', delay: 400 },
-  { text: 'LOADING 14 AI MODELS ACROSS 6 PROVIDERS', delay: 350 },
-  { text: 'SPIDER-WEB MESH ................. 182 NODES ACTIVE', delay: 300 },
-  { text: 'KNOWLEDGE BASE ..................... 20+ ENTRIES', delay: 250 },
-  { text: 'MEMORY SUBSYSTEM ................... RECORDING', delay: 250 },
-  { text: 'VOICE RECOGNITION ........... ALWAYS-ON MODE', delay: 300 },
-  { text: 'SECURITY PROTOCOLS ............. ARMED', delay: 250 },
-  { text: 'ALL SYSTEMS NOMINAL. READY, SIR.', delay: 400 },
-];
-
 export default function JarvisPage() {
   const [mode, setMode] = useState<OrbMode>('idle');
   const [booting, setBooting] = useState(true);
-  const [bootLines, setBootLines] = useState<string[]>([]);
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupKey, setSetupKey] = useState('');
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -62,25 +50,8 @@ export default function JarvisPage() {
   const lastSpokeAtRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ── Boot Sequence ─────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    const runBoot = async () => {
-      setBooting(true);
-      setBootLines([]);
-      for (const line of BOOT_SEQUENCE) {
-        if (cancelled) return;
-        await new Promise(r => setTimeout(r, line.delay));
-        setBootLines(prev => [...prev, line.text]);
-      }
-      if (!cancelled) {
-        await new Promise(r => setTimeout(r, 600));
-        setBooting(false);
-      }
-    };
-    runBoot();
-    return () => { cancelled = true; };
-  }, []);
+  // ── Boot completed callback ────────────────────────────────
+  const handleBootComplete = useCallback(() => setBooting(false), []);
 
   // ── Check API key ──────────────────────────────────────────
   useEffect(() => {
@@ -365,59 +336,9 @@ export default function JarvisPage() {
       {/* Mode glow */}
       <div className="mode-glow" data-mode={mode} />
 
-      {/* ═══ BOOT SEQUENCE ═══ */}
+      {/* ═══ IRON MAN BOOT SEQUENCE ═══ */}
       <AnimatePresence>
-        {booting && (
-          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-            style={{ background: 'linear-gradient(180deg, #020306, #04060c)' }}>
-            <div className="max-w-xl w-full px-8">
-              {/* Arc Reactor Boot Icon */}
-              <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
-                className="text-center mb-10">
-                <div className="relative inline-block">
-                  <svg width="80" height="80" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(0,200,255,0.15)" strokeWidth="0.5" />
-                    <circle cx="40" cy="40" r="22" fill="none" stroke="rgba(0,200,255,0.2)" strokeWidth="0.5"
-                      strokeDasharray="4 6" />
-                    <circle cx="40" cy="40" r="14" fill="none" stroke="rgba(0,200,255,0.3)" strokeWidth="1" />
-                    <circle cx="40" cy="40" r="6" fill="rgba(0,200,255,0.4)"
-                      style={{ filter: 'drop-shadow(0 0 8px rgba(0,200,255,0.6))' }} />
-                  </svg>
-                </div>
-                <div className="mt-6 text-[11px] tracking-[0.6em] text-cyan-400/60 font-light"
-                  style={{ fontFamily: 'Courier New, monospace' }}>
-                  J.A.R.V.I.S.
-                </div>
-                <div className="text-[9px] tracking-[0.4em] text-slate-600 mt-2"
-                  style={{ fontFamily: 'Courier New, monospace' }}>
-                  JUST A RATHER VERY INTELLIGENT SYSTEM
-                </div>
-              </motion.div>
-
-              {/* Boot lines */}
-              <div className="space-y-1">
-                {bootLines.map((line, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-3 text-[10px] font-mono">
-                    <span className="text-cyan-500/40">[</span>
-                    <span className="text-cyan-400/50">{line}</span>
-                    <span className="text-emerald-400/70 ml-auto">OK</span>
-                    <span className="text-cyan-500/40">]</span>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Progress bar */}
-              <div className="mt-6 h-[1px] bg-white/[0.03] overflow-hidden">
-                <motion.div initial={{ width: '0%' }}
-                  animate={{ width: `${(bootLines.length / BOOT_SEQUENCE.length) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full bg-gradient-to-r from-cyan-500/50 to-cyan-400/30" />
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {booting && <BootSequence onComplete={handleBootComplete} />}
       </AnimatePresence>
 
       {/* ═══ API KEY SETUP ═══ */}
