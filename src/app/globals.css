@@ -1418,15 +1418,63 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
 @keyframes jarvis-scanline { from { transform: translateY(-110%); } to { transform: translateY(110%); } }
 
 @media (max-width: 720px) {
-  .jarvis-shell [role="dialog"] > div:not([role="dialog"]), .jarvis-shell [role="alertdialog"] > div:not([role="dialog"]) {
+  .jarvis-shell [role="dialog"] > .surface-strong, .jarvis-shell [role="alertdialog"] > .surface-strong {
     width: 100% !important;
     max-height: calc(100dvh - 24px) !important;
+    height: calc(100dvh - 24px) !important;
     border-radius: 16px !important;
   }
-  .jarvis-shell [role="dialog"] canvas { min-height: 220px; }
+  .jarvis-shell [role="dialog"] > .surface-strong > div:nth-child(2),
+  .jarvis-shell [role="dialog"] > .surface-strong > div:nth-child(4),
+  .jarvis-shell [role="alertdialog"] > .surface-strong > div:nth-child(2),
+  .jarvis-shell [role="alertdialog"] > .surface-strong > div:nth-child(4) { display: none !important; }
+  .jarvis-shell [role="dialog"] > .surface-strong > div:nth-child(3),
+  .jarvis-shell [role="alertdialog"] > .surface-strong > div:nth-child(3) { width: 100% !important; min-width: 0 !important; flex: 1 1 auto !important; padding-top: 58px; }
+  .jarvis-shell [role="dialog"] canvas, .jarvis-shell [role="alertdialog"] canvas { min-height: 220px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .jarvis-shell .hud-reticle-svg { animation: none; }
   .jarvis-shell .hud-module::after { display: none; }
   .jarvis-shell [role="dialog"] button, .jarvis-shell [role="alertdialog"] button { transition: none; }
+}
+
+/* Visible product shell: the command center should read immediately in preview. */
+.jarvis-shell {
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(246, 104, 48, .13) 0%, transparent 31%),
+    radial-gradient(ellipse at 50% 70%, rgba(74, 126, 135, .09) 0%, transparent 40%),
+    #080a0d !important;
+}
+.jarvis-shell::before { opacity: .22; background-size: 48px 48px; }
+.jarvis-shell .hud-top { min-height: 68px; padding-top: 18px; background: rgba(6,8,11,.84); border-bottom-color: rgba(255,255,255,.11); }
+.jarvis-shell .hud-brand { color: #f3eee7; font-size: 12px; letter-spacing: .34em; }
+.jarvis-shell .hud-brand::before { content: '●'; margin-right: 10px; color: var(--jarvis-amber); font-size: 8px; vertical-align: 2px; text-shadow: 0 0 12px var(--jarvis-amber); }
+.jarvis-shell .hud-top .hud-model-tag { padding: 7px 10px; border-radius: 6px; color: #b9d8d5; background: rgba(117,217,209,.07); border-color: rgba(117,217,209,.22); }
+.jarvis-shell .hud-stage { position: relative; }
+.jarvis-shell .hud-center { z-index: 1; }
+.jarvis-shell .hud-center > .relative { filter: drop-shadow(0 24px 65px rgba(0,0,0,.55)); }
+.jarvis-shell .hud-reticle { opacity: .98; }
+.jarvis-shell .hud-reticle-svg { opacity: .9; }
+.jarvis-shell .hud-greeting { text-shadow: 0 8px 34px rgba(0,0,0,.8); }
+.jarvis-shell .hud-sub { color: #d3a38e; font-weight: 700; }
+.jarvis-shell .hud-context-line { color: rgba(233,226,215,.48); }
+.jarvis-shell .hud-module { border-color: rgba(255,255,255,.16); background: rgba(19,22,27,.86); box-shadow: 0 12px 35px rgba(0,0,0,.18); }
+.jarvis-shell .hud-module-title { color: #f0ece4; }
+.jarvis-shell .hud-module-meta { color: rgba(255,255,255,.45); }
+.jarvis-shell .hud-wing { z-index: 2; }
+.jarvis-shell .hud-panel2 { border-color: rgba(255,255,255,.14); background: rgba(13,16,20,.78); box-shadow: 0 20px 55px rgba(0,0,0,.26); }
+.jarvis-shell .hud-panel2-eyebrow { color: rgba(255,255,255,.58); }
+.jarvis-shell .hud-cmdline { z-index: 3; padding-bottom: 24px; }
+.jarvis-shell .hud-cmdline .composer { min-height: 60px; border-radius: 16px; border-color: rgba(255,255,255,.2); background: rgba(20,23,29,.94); box-shadow: 0 18px 50px rgba(0,0,0,.38), 0 0 0 1px rgba(255,139,85,.05) inset; }
+.jarvis-shell .hud-cmdline .composer:focus-within { border-color: rgba(255,139,85,.62); box-shadow: 0 18px 50px rgba(0,0,0,.38), 0 0 0 3px rgba(255,139,85,.1); }
+.jarvis-shell .hud-cmdline input::placeholder { color: rgba(255,255,255,.42); }
+.jarvis-shell .icon-action { background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.14); }
+.jarvis-shell .icon-action:hover { background: rgba(255,139,85,.15); border-color: rgba(255,139,85,.42); color: #fff; }
+
+@media (max-width: 720px) {
+  .jarvis-shell .hud-top { min-height: 60px; }
+  .jarvis-shell .hud-stage { padding-top: 2px; }
+  .jarvis-shell .hud-center > div.relative { width: min(84vw, 370px); height: min(84vw, 370px); }
+  .jarvis-shell .hud-cmdline { padding-bottom: 16px; }
+  .jarvis-shell .hud-cmdline .composer { min-height: 56px; }
 }
