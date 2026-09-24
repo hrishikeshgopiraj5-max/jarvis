@@ -1311,13 +1311,23 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
   .jarvis-shell .hud-stage { padding: 0 14px; }
   .jarvis-shell .hud-center { padding-top: 8px; }
 }
-@media (max-width: 640px) {
+@media (max-width: 720px) {
+  .jarvis-shell .hud-stage { grid-template-columns: 1fr; gap: 0; padding: 0 14px; }
+  .jarvis-shell .hud-wing { display: none; }
   .jarvis-shell .hud-top { padding-inline: 16px; }
   .jarvis-shell .hud-brand { font-size: 10px; }
-  .jarvis-shell .hud-center > div.relative { width: min(92vw, 390px); height: min(92vw, 390px); }
-  .jarvis-shell .hud-exchange { min-height: 92px; }
-  .jarvis-shell .hud-cmdline { padding-inline: 12px; }
+  .jarvis-shell .hud-center { min-height: 0; }
+  .jarvis-shell .hud-center > div.relative { width: min(78vw, 360px); height: min(78vw, 360px); }
+  .jarvis-shell .hud-exchange { min-height: 92px; margin-top: 2px; }
+  .jarvis-shell .hud-greeting { font-size: clamp(25px, 7vw, 34px); }
+  .jarvis-shell .hud-cmdline { padding: 10px 12px 16px; }
   .jarvis-shell .hud-cmdline .composer { min-height: 48px; }
+}
+
+@media (max-width: 420px) {
+  .jarvis-shell .hud-center > div.relative { width: min(82vw, 320px); height: min(82vw, 320px); }
+  .jarvis-shell .hud-greeting { max-width: 280px; margin-inline: auto; }
+  .jarvis-shell .hud-context-line { max-width: 270px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .jarvis-shell::before { display: none; }
