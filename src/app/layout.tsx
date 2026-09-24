@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'J.A.R.V.I.S. — Immersive Intelligence',
-  description: 'A delegation-first AI system: computer use, deep research, build studio, and a multi-model mesh — voice-first, wearing a dark monochrome 3D interface.',
+  title: 'JARVIS — Personal Intelligence System',
+  description: 'A voice-first personal intelligence system for research, building, memory, and computer control.',
 };
 
 export const viewport: Viewport = {
@@ -20,9 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Bodoni Moda: editorial display · Manrope: UI · JetBrains Mono: telemetry */}
+        {/* Manrope: display and UI · JetBrains Mono: telemetry */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700;6..96,800;6..96,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>

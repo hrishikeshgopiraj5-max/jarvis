@@ -46,7 +46,7 @@
   --grade-c: #9b9b98;
 
   /* Type */
-  --font-display: 'Bodoni Moda', 'Didot', 'Playfair Display', Georgia, serif;
+  --font-display: 'Manrope', 'Segoe UI Variable Text', system-ui, sans-serif;
   --font-ui: 'Manrope', 'Segoe UI Variable Text', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, monospace;
 
@@ -1236,4 +1236,87 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
 @media (max-width: 1024px) {
   .hud-stage { grid-template-columns: 1fr; padding: 0 14px; }
   .hud-wing { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   JARVIS SYSTEM SHELL — spatial, quiet, responsive
+   ═══════════════════════════════════════════════════════════ */
+.jarvis-shell {
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+.jarvis-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: .34;
+  background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 74%);
+}
+.jarvis-shell .grading { opacity: .72; }
+.jarvis-shell .hud-top {
+  min-height: 58px;
+  padding: 16px clamp(18px, 3vw, 42px) 12px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: linear-gradient(180deg, rgba(7,8,10,.74), rgba(7,8,10,.22));
+}
+.jarvis-shell .hud-brand {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .28em;
+  font-weight: 700;
+  color: rgba(255,255,255,.88);
+}
+.jarvis-shell .hud-stage {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(190px, 230px) minmax(380px, 1fr) minmax(190px, 230px);
+  gap: clamp(20px, 4vw, 70px);
+  padding: 0 clamp(18px, 4vw, 64px);
+}
+.jarvis-shell .hud-panel2 {
+  border-radius: 12px;
+  border-color: rgba(255,255,255,.10);
+  background: linear-gradient(145deg, rgba(22,25,30,.72), rgba(10,12,15,.32));
+  box-shadow: 0 20px 60px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.045);
+}
+.jarvis-shell .hud-panel2-eyebrow { color: rgba(255,255,255,.42); letter-spacing: .18em; }
+.jarvis-shell .hud-panel2::before { background: linear-gradient(90deg, rgba(255,90,31,.9), transparent); width: 52px; }
+.jarvis-shell .hud-module { border-radius: 8px; padding: 10px 9px; background: rgba(255,255,255,.025); }
+.jarvis-shell .hud-module:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.2); }
+.jarvis-shell .hud-center { align-self: stretch; justify-content: center; position: relative; width: 100%; }
+.jarvis-shell .hud-center > .relative { margin-inline: auto; }
+.jarvis-shell .hud-greeting { font-family: var(--font-ui); font-size: clamp(28px, 3vw, 42px); font-weight: 600; letter-spacing: -.045em; background: none; -webkit-text-fill-color: currentColor; color: #f5f2ed; }
+.jarvis-shell .hud-sub { letter-spacing: .18em; color: rgba(255,255,255,.38); }
+.jarvis-shell .hud-exchange { min-height: 104px; margin-top: 12px; }
+.jarvis-shell .hud-cmdline { max-width: 920px; padding: 10px clamp(18px, 4vw, 64px) 20px; }
+.jarvis-shell .hud-cmdline .composer {
+  min-height: 52px;
+  border-radius: 14px;
+  border-color: rgba(255,255,255,.14);
+  background: rgba(18,20,24,.78);
+  box-shadow: 0 12px 30px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.05);
+}
+.jarvis-shell .icon-action { border-radius: 12px; }
+.jarvis-shell .hud-reticle-svg { opacity: .72; }
+
+@media (max-width: 1024px) {
+  .jarvis-shell .hud-stage { padding: 0 14px; }
+  .jarvis-shell .hud-center { padding-top: 8px; }
+}
+@media (max-width: 640px) {
+  .jarvis-shell .hud-top { padding-inline: 16px; }
+  .jarvis-shell .hud-brand { font-size: 10px; }
+  .jarvis-shell .hud-center > div.relative { width: min(92vw, 390px); height: min(92vw, 390px); }
+  .jarvis-shell .hud-exchange { min-height: 92px; }
+  .jarvis-shell .hud-cmdline { padding-inline: 12px; }
+  .jarvis-shell .hud-cmdline .composer { min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jarvis-shell::before { display: none; }
+  .jarvis-shell .hud-module:hover { transform: none; }
 }

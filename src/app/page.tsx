@@ -155,7 +155,7 @@ function JarvisShell() {
   };
 
   return (
-    <div className="fixed inset-0" style={{ background: 'var(--bg)' }}>
+    <div className="jarvis-shell fixed inset-0" style={{ background: 'var(--bg)' }}>
       <div className="grading" aria-hidden="true" />
       <div className="state-wash" data-mode={state} aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
