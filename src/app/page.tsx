@@ -263,6 +263,9 @@ function JarvisShell() {
           </div>
           <div className="relative w-[min(66vw,430px)] h-[min(66vw,430px)] flex items-center justify-center">
             <AICore className="absolute inset-0" state={state} micLevel={micLevel} activeAgents={activeAgents} />
+            <span className="sr-only" role="status" aria-live="polite">
+              JARVIS status: {STATE_LABELS[state]}. {activeAgents.primary.length > 0 ? `Active capabilities: ${activeAgents.primary.join(', ')}.` : 'No specialist capabilities are currently active.'}
+            </span>
           </div>
 
           {/* Exchange readout — ephemeral, below the orb */}
@@ -306,6 +309,9 @@ function JarvisShell() {
                       ? 'HANDS-FREE ARMED — SAY “JARVIS”'
                       : busy ? 'WORKING…' : 'AWAITING YOUR COMMAND'}
                   </p>
+                  <p className="hud-context-line" aria-live="polite">
+                    {lastUser?.text ? `LAST COMMAND · ${lastUser.text.slice(0, 64)}${lastUser.text.length > 64 ? '…' : ''}` : 'READY FOR A VOICE OR TEXT COMMAND'}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -338,6 +344,10 @@ function JarvisShell() {
           <HudPanel eyebrow="CURRENT TASK">
             {busy ? (
               <>
+                <div className="hud-task-state" aria-live="polite">
+                  <span className="hud-task-state-dot" style={{ background: stateDotColor(state) }} />
+                  <span>{STATE_LABELS[state]}</span>
+                </div>
                 <div className="hud-kv"><span>Protocol</span><b>AUTO</b></div>
                 {lastModels.length > 0 && (
                   <div className="hud-kv-col">

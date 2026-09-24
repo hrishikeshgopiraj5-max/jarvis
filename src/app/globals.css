@@ -1292,6 +1292,9 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
 .jarvis-shell .hud-center > .relative { margin-inline: auto; }
 .jarvis-shell .hud-greeting { font-family: var(--font-ui); font-size: clamp(28px, 3vw, 42px); font-weight: 600; letter-spacing: -.045em; background: none; -webkit-text-fill-color: currentColor; color: #f5f2ed; }
 .jarvis-shell .hud-sub { letter-spacing: .18em; color: rgba(255,255,255,.38); }
+.jarvis-shell .hud-context-line { margin-top: 9px; color: rgba(255,255,255,.25); font: 500 9px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; max-width: 360px; margin-inline: auto; }
+.jarvis-shell .hud-task-state { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.07); font: 700 10px/1 var(--font-mono); letter-spacing: .14em; color: rgba(255,255,255,.78); }
+.jarvis-shell .hud-task-state-dot { width: 6px; height: 6px; border-radius: 999px; box-shadow: 0 0 12px currentColor; }
 .jarvis-shell .hud-exchange { min-height: 104px; margin-top: 12px; }
 .jarvis-shell .hud-cmdline { max-width: 920px; padding: 10px clamp(18px, 4vw, 64px) 20px; }
 .jarvis-shell .hud-cmdline .composer {
