@@ -5,9 +5,11 @@ import { learnFromCommand, learnFromChain, getSmartSuggestions, suggestNextSteps
 
 export async function POST(request: Request) {
   try {
-    const { message, conversation = [], apiKey: clientApiKey } = await request.json();
+    const { message, conversation = [], strategy, model } = await request.json();
 
-    const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+    // SECURITY: server-side key only. Never accept API keys from the client —
+    // the old flow trusted a localStorage key POSTed to this route.
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
       const response = generateLocalResponse(message);
@@ -20,7 +22,24 @@ export async function POST(request: Request) {
       });
     }
 
+    if (typeof message !== 'string' || message.length > 8000) {
+      return NextResponse.json({ error: 'Invalid message.' }, { status: 400 });
+    }
+    if (!Array.isArray(conversation) || conversation.length > 50) {
+      return NextResponse.json({ error: 'Invalid conversation.' }, { status: 400 });
+    }
+
     // ── Route through the spider-web mesh with RAG + Memory ─────
+    // Client may pin strategy (Astra mode) or a specific model; both are
+    // sanitized before reaching the mesh.
+    const validStrategies = ['single', 'dual', 'triple'] as const;
+    const forcedStrategy = validStrategies.includes(strategy)
+      ? strategy as 'single' | 'dual' | 'triple'
+      : undefined;
+    const forcedModel = typeof model === 'string' && /^[\w./:-]+$/.test(model) && model.length <= 100
+      ? model
+      : undefined;
+
     const meshResult = await executeMeshQuery({
       apiKey,
       message,
@@ -30,6 +49,8 @@ export async function POST(request: Request) {
       })),
       useKnowledge: true,
       useMemory: true,
+      strategyOverride: forcedStrategy,
+      modelOverride: forcedModel,
     });
 
     // ── Record in memory system ─────────────────────────────────
@@ -131,7 +152,7 @@ function generateLocalResponse(message: string): string {
   }
 
   if (lower.includes('your name') || lower.includes('who are you')) {
-    return 'I am JARVIS — Just A Rather Very Intelligent System. Your personal AI assistant, powered by a mesh of neural networks, at your service.';
+    return 'I am ASTRA — your delegation-first AI system, powered by a mesh of neural networks, at your service.';
   }
 
   if (lower.includes('what can you do') || lower.includes('help')) {
@@ -152,5 +173,5 @@ function generateLocalResponse(message: string): string {
     return `The neural mesh is currently **offline** (no API key configured).\n\nMesh configuration:\n- **Total models**: ${info.totalModels}\n- **Providers**: ${providerList}\n- **Connections**: ${info.totalConnections} node-to-node links\n- **Knowledge base**: ${info.knowledgeBase.totalEntries} entries, ${info.knowledgeBase.totalCommands} commands\n\nTo activate the full mesh, set your OpenRouter API key in **Settings**.`;
   }
 
-  return `I understand your request: *"${message}"*\n\nI'm currently running in **local mode** — the neural mesh is offline. To unlock my full capabilities, set your OpenRouter API key.\n\nIn the meantime, I can still help with:\n- Time and date queries\n- Setting timers and reminders\n- Creating and managing notes\n- Basic calculations\n\nWhat would you like to do?`;
+  return `I understand your request: *"${message}"*\n\nI'm currently running in **local mode** — the neural mesh is offline. To unlock my full capabilities, set your OpenRouter API key.\n\nIn the meantime, I can still help with:\n- Time and date queries\n- Setting timers and reminders\n- Creating and managing notes\n- Basic calculations\n\nWhat would you like to do, sir?`;
 }

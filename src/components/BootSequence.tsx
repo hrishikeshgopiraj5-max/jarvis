@@ -12,12 +12,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ═══════════════════════════════════════════════════════════════
 
 const BOOT_LINES = [
-  { text: 'STARK INDUSTRIES // NEURAL MESH INITIALIZATION', delay: 120 },
-  { text: 'ARK REACTOR POWER CORE ................ ONLINE', delay: 100 },
-  { text: 'LOADING 14 AI MODELS ACROSS 6 PROVIDERS', delay: 110 },
+  { text: 'ASTRA // DELEGATION SYSTEM INITIALIZATION', delay: 120 },
+  { text: 'LUMINous CORE ........................ ONLINE', delay: 100 },
+  { text: 'MESH ROUTER ....... MULTI-MODEL ORCHESTRATION', delay: 110 },
   { text: 'SPIDER-WEB MESH ................. 182 NODES ACTIVE', delay: 90 },
   { text: 'KNOWLEDGE BASE ..................... 20+ ENTRIES', delay: 80 },
-  { text: 'MEMORY SUBSYSTEM ................... RECORDING', delay: 80 },
+  { text: 'MEMORY + WORKING NOTES ............. RECORDING', delay: 80 },
+  { text: 'COMPUTER USE ................. COCKPIT READY', delay: 90 },
   { text: 'VOICE RECOGNITION ........... ALWAYS-ON MODE', delay: 90 },
   { text: 'SECURITY PROTOCOLS ............. ARMED', delay: 80 },
   { text: 'ALL SYSTEMS NOMINAL. READY, SIR.', delay: 150 },
@@ -302,38 +303,50 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
     };
   }, [runBoot]);
 
+  // ── Skippable: any key or click completes boot immediately ──
+  useEffect(() => {
+    const skip = () => { cancelledRef.current = true; onComplete(); };
+    window.addEventListener('keydown', skip);
+    window.addEventListener('pointerdown', skip);
+    return () => {
+      window.removeEventListener('keydown', skip);
+      window.removeEventListener('pointerdown', skip);
+    };
+  }, [onComplete]);
+
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
-      style={{ background: '#020306' }}
+      style={{ background: '#0a0a0c' }}
     >
       {/* Flash overlay */}
       <div className="absolute inset-0 pointer-events-none z-50 transition-opacity"
-        style={{ opacity: flashOpacity, background: 'radial-gradient(circle, rgba(0,200,255,0.5), transparent 70%)' }} />
+        style={{ opacity: flashOpacity, background: 'radial-gradient(circle, rgba(232,230,224,0.5), transparent 70%)' }} />
 
       {/* Hex grid (fades in) */}
       <div className="hex-grid" style={{ opacity: stage >= 2 ? 0.02 : 0, transition: 'opacity 1s ease' }} />
+
 
       {/* ═══ STAGE 1: Arc Reactor ═══ */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div style={{ transform: `scale(${reactorScale})`, transition: 'none' }}>
           <svg width="300" height="300" viewBox="0 0 300 300" className="md:w-[350px] md:h-[350px]">
             {/* Outer ring */}
-            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(0,200,255,0.06)" strokeWidth="0.5"
+            <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(232,230,224,0.06)" strokeWidth="0.5"
               style={{ opacity: stage >= 2 ? 1 : 0, transition: 'opacity 0.5s' }} />
 
             {/* Rotating rings */}
             <g style={{ opacity: stage >= 1 ? 1 : 0, transition: 'opacity 0.8s' }}>
-              <circle cx="150" cy="150" r="130" fill="none" stroke="rgba(0,200,255,0.12)" strokeWidth="0.5"
+              <circle cx="150" cy="150" r="130" fill="none" stroke="rgba(232,230,224,0.12)" strokeWidth="0.5"
                 strokeDasharray="8 12" style={{ transformOrigin: '150px 150px', animation: 'ring-rotate 20s linear infinite' }} />
-              <circle cx="150" cy="150" r="110" fill="none" stroke="rgba(0,200,255,0.1)" strokeWidth="0.5"
+              <circle cx="150" cy="150" r="110" fill="none" stroke="rgba(232,230,224,0.1)" strokeWidth="0.5"
                 style={{ transformOrigin: '150px 150px', animation: 'ring-rotate 15s linear infinite reverse' }} />
-              <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(0,200,255,0.15)" strokeWidth="1"
+              <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(232,230,224,0.15)" strokeWidth="1"
                 style={{ transformOrigin: '150px 150px', animation: 'ring-rotate 25s linear infinite' }} />
-              <circle cx="150" cy="150" r="70" fill="none" stroke="rgba(0,200,255,0.12)" strokeWidth="0.5"
+              <circle cx="150" cy="150" r="70" fill="none" stroke="rgba(232,230,224,0.12)" strokeWidth="0.5"
                 strokeDasharray="4 8" style={{ transformOrigin: '150px 150px', animation: 'ring-rotate 10s linear infinite reverse' }} />
             </g>
 
@@ -341,14 +354,14 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             <g style={{ opacity: stage >= 1 ? 1 : 0, transition: 'opacity 0.8s', transformOrigin: '150px 150px', animation: 'ring-rotate 15s linear infinite' }}>
               {Array.from({ length: 12 }, (_, i) => i * 30).map((deg) => (
                 <line key={deg} x1="150" y1="15" x2="150" y2="40"
-                  stroke="rgba(0,200,255,0.3)" strokeWidth="1.5"
+                  stroke="rgba(232,230,224,0.3)" strokeWidth="1.5"
                   transform={`rotate(${deg} 150 150)`} />
               ))}
             </g>
             <g style={{ opacity: stage >= 1 ? 1 : 0, transformOrigin: '150px 150px', animation: 'ring-rotate 10s linear infinite reverse' }}>
               {Array.from({ length: 8 }, (_, i) => i * 45).map((deg) => (
                 <line key={deg} x1="150" y1="60" x2="150" y2="80"
-                  stroke="rgba(0,200,255,0.2)" strokeWidth="1"
+                  stroke="rgba(232,230,224,0.2)" strokeWidth="1"
                   transform={`rotate(${deg} 150 150)`} />
               ))}
             </g>
@@ -356,27 +369,27 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             {/* Core glow */}
             <defs>
               <radialGradient id="bootCoreGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="rgba(0,230,255,1)" />
-                <stop offset="30%" stopColor="rgba(0,180,255,0.7)" />
-                <stop offset="60%" stopColor="rgba(0,120,255,0.3)" />
+                <stop offset="0%" stopColor="rgba(255,252,245,1)" />
+                <stop offset="30%" stopColor="rgba(240,236,228,0.7)" />
+                <stop offset="60%" stopColor="rgba(255, 90, 31, 0.3)" />
                 <stop offset="100%" stopColor="transparent" />
               </radialGradient>
             </defs>
             <circle cx="150" cy="150" r="25" fill="url(#bootCoreGlow)"
               style={{ filter: 'blur(2px)' }} />
-            <circle cx="150" cy="150" r="12" fill="rgba(0,220,255,0.9)"
-              style={{ filter: 'drop-shadow(0 0 15px rgba(0,200,255,0.8))' }} />
+            <circle cx="150" cy="150" r="12" fill="rgba(255,250,240,0.9)"
+              style={{ filter: 'drop-shadow(0 0 15px rgba(232,230,224,0.8))' }} />
             <circle cx="150" cy="150" r="5" fill="rgba(255,255,255,0.9)" />
 
             {/* Orbiting particles */}
             {stage >= 2 && (
               <>
-                <circle cx="150" cy="150" r="2.5" fill="rgba(0,200,255,0.7)"
-                  style={{ filter: 'drop-shadow(0 0 4px rgba(0,200,255,0.5))', transformOrigin: '150px 150px', animation: 'orbit-1 6s linear infinite' }} />
-                <circle cx="150" cy="150" r="2" fill="rgba(0,180,255,0.6)"
-                  style={{ filter: 'drop-shadow(0 0 4px rgba(0,180,255,0.4))', transformOrigin: '150px 150px', animation: 'orbit-2 9s linear infinite' }} />
-                <circle cx="150" cy="150" r="1.5" fill="rgba(0,160,255,0.5)"
-                  style={{ filter: 'drop-shadow(0 0 3px rgba(0,160,255,0.3))', transformOrigin: '150px 150px', animation: 'orbit-3 12s linear infinite' }} />
+                <circle cx="150" cy="150" r="2.5" fill="rgba(232,230,224,0.7)"
+                  style={{ filter: 'drop-shadow(0 0 4px rgba(232,230,224,0.5))', transformOrigin: '150px 150px', animation: 'orbit-1 6s linear infinite' }} />
+                <circle cx="150" cy="150" r="2" fill="rgba(240,236,228,0.6)"
+                  style={{ filter: 'drop-shadow(0 0 4px rgba(240,236,228,0.4))', transformOrigin: '150px 150px', animation: 'orbit-2 9s linear infinite' }} />
+                <circle cx="150" cy="150" r="1.5" fill="rgba(255, 90, 31, 0.5)"
+                  style={{ filter: 'drop-shadow(0 0 3px rgba(255, 90, 31, 0.3))', transformOrigin: '150px 150px', animation: 'orbit-3 12s linear infinite' }} />
               </>
             )}
           </svg>
@@ -390,13 +403,13 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{ transform: `translate(-50%, -50%) scale(${crosshairScale})`, transition: 'transform 0.4s ease-out' }}>
           <svg width="400" height="400" viewBox="0 0 400 400" style={{ opacity: 0.08 }}>
-            <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(0,200,255,1)" strokeWidth="0.5" />
-            <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(0,200,255,0.5)" strokeWidth="0.3" strokeDasharray="2 4" />
+            <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(232,230,224,1)" strokeWidth="0.5" />
+            <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(232,230,224,0.5)" strokeWidth="0.3" strokeDasharray="2 4" />
             {/* Crosshair lines */}
-            <line x1="200" y1="10" x2="200" y2="80" stroke="rgba(0,200,255,0.6)" strokeWidth="0.5" />
-            <line x1="200" y1="320" x2="200" y2="390" stroke="rgba(0,200,255,0.6)" strokeWidth="0.5" />
-            <line x1="10" y1="200" x2="80" y2="200" stroke="rgba(0,200,255,0.6)" strokeWidth="0.5" />
-            <line x1="320" y1="200" x2="390" y2="200" stroke="rgba(0,200,255,0.6)" strokeWidth="0.5" />
+            <line x1="200" y1="10" x2="200" y2="80" stroke="rgba(232,230,224,0.6)" strokeWidth="0.5" />
+            <line x1="200" y1="320" x2="200" y2="390" stroke="rgba(232,230,224,0.6)" strokeWidth="0.5" />
+            <line x1="10" y1="200" x2="80" y2="200" stroke="rgba(232,230,224,0.6)" strokeWidth="0.5" />
+            <line x1="320" y1="200" x2="390" y2="200" stroke="rgba(232,230,224,0.6)" strokeWidth="0.5" />
             {/* Tick marks */}
             {Array.from({ length: 36 }, (_, i) => i * 10).map(deg => (
               <line key={deg}
@@ -404,7 +417,7 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
                 y1={200 + 175 * Math.sin((deg * Math.PI) / 180)}
                 x2={200 + 180 * Math.cos((deg * Math.PI) / 180)}
                 y2={200 + 180 * Math.sin((deg * Math.PI) / 180)}
-                stroke="rgba(0,200,255,0.4)" strokeWidth="0.5" />
+                stroke="rgba(232,230,224,0.4)" strokeWidth="0.5" />
             ))}
           </svg>
         </div>
@@ -419,40 +432,40 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           <>
             {/* Top-left */}
             <div className="absolute top-6 left-6" style={{ opacity: 0.3 }}>
-              <div className="w-16 h-[1px] bg-gradient-to-r from-cyan-400 to-transparent" />
-              <div className="w-[1px] h-16 bg-gradient-to-b from-cyan-400 to-transparent" />
+              <div className="w-16 h-[1px] bg-gradient-to-r from-white/30 to-transparent" />
+              <div className="w-[1px] h-16 bg-gradient-to-b from-white/30 to-transparent" />
             </div>
             {/* Top-right */}
             <div className="absolute top-6 right-6" style={{ opacity: 0.3 }}>
-              <div className="w-16 h-[1px] bg-gradient-to-l from-cyan-400 to-transparent ml-auto" />
-              <div className="w-[1px] h-16 bg-gradient-to-b from-cyan-400 to-transparent ml-auto" />
+              <div className="w-16 h-[1px] bg-gradient-to-l from-white/30 to-transparent ml-auto" />
+              <div className="w-[1px] h-16 bg-gradient-to-b from-white/30 to-transparent ml-auto" />
             </div>
             {/* Bottom-left */}
             <div className="absolute bottom-6 left-6" style={{ opacity: 0.3 }}>
-              <div className="w-[1px] h-16 bg-gradient-to-t from-cyan-400 to-transparent" />
-              <div className="w-16 h-[1px] bg-gradient-to-r from-cyan-400 to-transparent" />
+              <div className="w-[1px] h-16 bg-gradient-to-t from-white/30 to-transparent" />
+              <div className="w-16 h-[1px] bg-gradient-to-r from-white/30 to-transparent" />
             </div>
             {/* Bottom-right */}
             <div className="absolute bottom-6 right-6" style={{ opacity: 0.3 }}>
-              <div className="w-[1px] h-16 bg-gradient-to-t from-cyan-400 to-transparent ml-auto" />
-              <div className="w-16 h-[1px] bg-gradient-to-l from-cyan-400 to-transparent ml-auto" />
+              <div className="w-[1px] h-16 bg-gradient-to-t from-white/30 to-transparent ml-auto" />
+              <div className="w-16 h-[1px] bg-gradient-to-l from-white/30 to-transparent ml-auto" />
             </div>
 
             {/* Top HUD bar */}
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 0.3, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
               className="absolute top-6 left-1/2 -translate-x-1/2">
-              <div className="hud-text text-[9px] text-cyan-400/80 text-center tracking-[0.6em]"
-                style={{ fontFamily: 'Courier New, monospace' }}>
-                J.A.R.V.I.S. // JUST A RATHER VERY INTELLIGENT SYSTEM
+              <div className="hud-text text-[9px] text-[color:var(--t2)]/80 text-center tracking-[0.6em]"
+                style={{ fontFamily: 'var(--font-mono)' }}>
+                A.S.T.R.A. // DELEGATION-FIRST INTELLIGENCE
               </div>
             </motion.div>
 
             {/* Left data readout */}
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 0.25, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="absolute left-8 top-1/3" style={{ fontFamily: 'Courier New, monospace' }}>
-              <div className="text-[8px] text-cyan-400/70 space-y-1">
+              className="absolute left-8 top-1/3" style={{ fontFamily: 'var(--font-mono)' }}>
+              <div className="text-[8px] text-[color:var(--t2)]/70 space-y-1">
                 <div>PWR: 100%</div>
                 <div>NET: ONLINE</div>
                 <div>MEM: ACTIVE</div>
@@ -464,8 +477,8 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             {/* Right data readout */}
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 0.25, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="absolute right-8 top-1/3 text-right" style={{ fontFamily: 'Courier New, monospace' }}>
-              <div className="text-[8px] text-cyan-400/70 space-y-1">
+              className="absolute right-8 top-1/3 text-right" style={{ fontFamily: 'var(--font-mono)' }}>
+              <div className="text-[8px] text-[color:var(--t2)]/70 space-y-1">
                 <div>MESH: 182</div>
                 <div>MODELS: 14</div>
                 <div>PROV: 6</div>
@@ -483,9 +496,9 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
           <div className="space-y-0.5">
             {bootLines.map((line, i) => (
               <div key={i} className="flex items-center gap-2"
-                style={{ fontFamily: 'Courier New, monospace' }}>
-                <span className="text-[8px] text-cyan-500/25">[{String(i + 1).padStart(2, '0')}]</span>
-                <span className="text-[9px] text-cyan-400/80 flex-1">
+                style={{ fontFamily: 'var(--font-mono)' }}>
+                <span className="text-[8px] text-[color:var(--t3)]/25">[{String(i + 1).padStart(2, '0')}]</span>
+                <span className="text-[9px] text-[color:var(--t2)]/80 flex-1">
                   {line || '\u00A0'}
                   {line && line.length === BOOT_LINES[i]?.text?.length && (
                     <span className="text-emerald-400/60 ml-2">OK</span>
@@ -495,8 +508,8 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
             ))}
           </div>
           {/* Progress bar */}
-          <div className="mt-4 h-[1px] bg-cyan-500/5 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-cyan-500/40 to-cyan-400/20 transition-all duration-300"
+          <div className="mt-4 h-[1px] bg-white/[0.04] overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-white/25 to-white/10 transition-all duration-300"
               style={{ width: `${progressWidth}%` }} />
           </div>
         </div>
@@ -512,14 +525,14 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
               <motion.div initial={{ opacity: 0, letterSpacing: '0.2em' }}
                 animate={{ opacity: 1, letterSpacing: '0.5em' }}
                 transition={{ duration: 0.6 }}
-                className="text-[11px] text-cyan-400/70"
-                style={{ fontFamily: 'Courier New, monospace' }}>
+                className="text-[11px] text-[color:var(--t2)]/70"
+                style={{ fontFamily: 'var(--font-mono)' }}>
                 ALL SYSTEMS NOMINAL
               </motion.div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.3 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-[9px] text-cyan-400/60 mt-2 tracking-[0.3em]"
-                style={{ fontFamily: 'Courier New, monospace' }}>
+                className="text-[9px] text-[color:var(--t2)] mt-2 tracking-[0.3em]"
+                style={{ fontFamily: 'var(--font-mono)' }}>
                 READY, SIR
               </motion.div>
             </div>
@@ -530,16 +543,22 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
       {/* Bottom status line */}
       {stage >= 2 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4"
-          style={{ fontFamily: 'Courier New, monospace' }}>
-          <div className="text-[7px] text-cyan-400/45 tracking-wider">STARK INDUSTRIES</div>
-          <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className="text-[7px] text-cyan-400/45 tracking-wider">v3.0</div>
-          <div className="w-[1px] h-2 bg-cyan-500/10" />
-          <div className={`text-[7px] tracking-wider ${stage >= 4 ? 'text-emerald-400/80' : 'text-cyan-400/45'}`}>
+          style={{ fontFamily: 'var(--font-mono)' }}>
+          <div className="text-[7px] text-[color:var(--t2)]/45 tracking-wider">ASTRA SYSTEMS</div>
+          <div className="w-[1px] h-2 bg-white/[0.04]" />
+          <div className="text-[7px] text-[color:var(--t2)]/45 tracking-wider">v1.0</div>
+          <div className="w-[1px] h-2 bg-white/[0.04]" />
+          <div className={`text-[7px] tracking-wider ${stage >= 4 ? 'text-emerald-400/80' : 'text-[color:var(--t2)]/45'}`}>
             {stage >= 4 ? 'ONLINE' : 'INITIALIZING'}
           </div>
         </div>
       )}
+
+      {/* Skip hint */}
+      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 text-[8px] text-[color:var(--t2)]/25 tracking-[0.3em] animate-pulse"
+        style={{ fontFamily: 'var(--font-mono)' }}>
+        PRESS ANY KEY TO SKIP
+      </div>
     </motion.div>
   );
 }

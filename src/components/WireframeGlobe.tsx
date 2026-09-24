@@ -42,8 +42,8 @@ export default function WireframeGlobe({
   const r = size * 0.42; // globe radius
 
   // Color shifts based on mode
-  const baseColor = mode === 'thinking' ? '180,160,60' : '0,200,255';
-  const glowColor = mode === 'thinking' ? 'rgba(180,160,60,0.3)' : 'rgba(0,200,255,0.25)';
+  const baseColor = mode === 'thinking' ? '251,191,36' : '232,228,220';
+  const glowColor = mode === 'thinking' ? 'rgba(251,191,36,0.22)' : 'rgba(232,230,224,0.16)';
 
   // ── Latitude lines (horizontal circles) ──
   const latCount = 7;

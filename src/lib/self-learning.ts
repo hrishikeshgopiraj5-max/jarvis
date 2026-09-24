@@ -354,14 +354,14 @@ function checkPlaybookProgress(command: string, output: string, success: boolean
 
   for (const pb of store.playbook) {
     const currentStepIdx = pb.steps.findIndex(s =>
-      command.includes(s.command.split(' ')[0]) && !s._completed
+      command.includes(s.command.split(' ')[0]) && !(s as Record<string, unknown>)._completed
     );
     if (currentStepIdx >= 0) {
-      (pb.steps[currentStepIdx] as any)._completed = true;
+      (pb.steps[currentStepIdx] as Record<string, unknown>)._completed = true;
       pb.steps[currentStepIdx].expectedOutput = output?.substring(0, 200) || '';
 
       // All steps completed?
-      if (pb.steps.every(s => (s as any)._completed)) {
+      if (pb.steps.every(s => (s as Record<string, unknown>)._completed)) {
         pb.timesUsed++;
         pb.successRate = Math.min(1, pb.successRate + 0.1);
       }

@@ -84,6 +84,8 @@ export interface Settings {
   accentColor: string;
   animationIntensity: 'low' | 'medium' | 'high';
   reducedMotion: boolean;
+  soundEffects: boolean;
+  quality: 'low' | 'medium' | 'high' | 'auto';
   aiModel: string;
   aiTemperature: number;
   openrouterApiKey: string;
@@ -201,6 +203,8 @@ const defaultSettings: Settings = {
   accentColor: '#00e5ff',
   animationIntensity: 'medium',
   reducedMotion: false,
+  soundEffects: true,
+  quality: 'auto',
   aiModel: 'auto',
   aiTemperature: 0.7,
   openrouterApiKey: '',
@@ -208,7 +212,9 @@ const defaultSettings: Settings = {
 };
 
 export function getSettings(): Settings {
-  return getItem<Settings>('settings', defaultSettings);
+  // Merge over defaults so settings saved by older versions (missing newer
+  // keys like autoSpeak) can never produce `undefined` booleans downstream.
+  return { ...defaultSettings, ...getItem<Partial<Settings>>('settings', {}) };
 }
 
 export function saveSettings(settings: Settings) {

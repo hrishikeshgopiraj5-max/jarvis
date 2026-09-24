@@ -47,16 +47,16 @@ const SEVERITY_CLASSES: Record<string, string> = {
   critical: 'text-red-400 border-red-500/20 bg-red-500/5',
   high: 'text-orange-400 border-orange-500/20 bg-orange-500/5',
   medium: 'text-amber-400 border-amber-500/20 bg-amber-500/5',
-  low: 'text-blue-400 border-blue-500/20 bg-blue-500/5',
-  info: 'text-slate-400 border-cyan-500/25 bg-cyan-500/[0.02]',
+  low: 'text-[color:var(--t2)] border-white/15 bg-white/[0.03]',
+  info: 'text-[color:var(--t2)] border-white/15 bg-white/[0.02]',
 };
 
 const SEVERITY_DOTS: Record<string, string> = {
   critical: 'bg-red-400',
   high: 'bg-orange-400',
   medium: 'bg-amber-400',
-  low: 'bg-blue-400',
-  info: 'bg-slate-500',
+  low: 'bg-white/30',
+  info: 'bg-white/25',
 };
 
 const PHASE_LABELS: Record<string, string> = {
@@ -219,29 +219,22 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
           initial={{ scale: 0.97, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.97, opacity: 0 }}
-          className="hud-panel rounded-lg w-[95vw] max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative"
-        >
-          <div className="corner-line-tl" />
-          <div className="corner-line-br" />
-
+          className="dialog-shell w-[95vw] max-w-4xl max-h-[88vh] flex flex-col overflow-hidden relative"
+      >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/5">
-            <div className="flex items-center gap-3">
-              <div className="hud-value text-sm text-cyan-400/60">[&gt;]</div>
-              <div>
-                <div className="hud-text text-cyan-400/70">AUTONOMOUS RECON</div>
-                <div className="hud-value text-sm text-cyan-100/60">JARVIS Auto-Recon Engine</div>
-              </div>
+          <div className="dialog-head">
+            <div className="min-w-0">
+              <div className="dialog-eyebrow">Recon · MIL-STD profile</div>
+              <div id="studio-title" className="dialog-title mt-1 truncate">Autonomous Reconnaissance</div>
               {scanning && (
-                <div className="flex items-center gap-2 ml-4">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="hud-text text-[9px] text-cyan-400/50">{currentPhase}</span>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: 'var(--accent)' }} />
+                  <span className="dialog-sub">{currentPhase}</span>
                 </div>
               )}
             </div>
             {!scanning && (
-              <button onClick={onClose}
-                className="w-7 h-7 rounded border border-cyan-500/25 flex items-center justify-center text-cyan-400/70 hover:text-cyan-400/90 transition-colors">
+              <button onClick={onClose} className="dialog-close" aria-label="Close recon">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -252,9 +245,8 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
           {/* Target Input */}
           {!result && !scanning && (
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-              <div className="hud-text text-cyan-400/60 mb-4">[TARGET ACQUISITION]</div>
-              <div className="text-[11px] text-slate-400/60 mb-6 text-center max-w-md"
-                style={{ fontFamily: 'Courier New, monospace' }}>
+              <div className="field-label mb-4">Target acquisition</div>
+              <div className="text-[13px] leading-relaxed text-[color:var(--t2)] mb-6 text-center max-w-md">
                 Enter a target domain to begin autonomous reconnaissance.
                 JARVIS will scan subdomains, technologies, ports, directories, and vulnerabilities.
               </div>
@@ -262,16 +254,14 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                 <input type="text" value={target} onChange={e => setTarget(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && target.trim()) startRecon(); }}
                   placeholder="target.com"
-                  className="flex-1 bg-transparent border border-cyan-500/15 rounded px-4 py-3 text-sm text-cyan-100 placeholder-slate-600 focus:border-cyan-400/25 transition-all"
-                  style={{ fontFamily: 'Courier New, monospace' }} autoFocus />
+                  className="field-input flex-1 font-mono" autoFocus />
                 <button onClick={startRecon} disabled={!target.trim()}
-                  className="px-6 py-3 rounded border border-cyan-500/20 text-cyan-400/80 text-[11px] tracking-wider hover:bg-cyan-500/5 disabled:opacity-20 transition-all"
-                  style={{ fontFamily: 'Courier New, monospace' }}>
-                  INITIATE SCAN
+                  className="btn-accent rounded-xl px-6 text-[12px] tracking-wide disabled:opacity-30">
+                  Initiate scan
                 </button>
               </div>
-              <div className="mt-4 hud-text text-[8px] text-cyan-400/45">
-                5 PHASES · SUBDOMAINS · TECHNOLOGY · PORTS · DIRECTORIES · VULNERABILITIES
+              <div className="mt-4 field-label">
+                5 phases · subdomains · technology · ports · directories · vulnerabilities
               </div>
             </div>
           )}
@@ -281,14 +271,14 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
               <div className="relative">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  className="w-20 h-20 border border-cyan-500/15 rounded-full"
-                  style={{ borderTopColor: 'rgba(0,200,255,0.5)' }} />
-                <div className="absolute inset-0 flex items-center justify-center hud-value text-xs text-cyan-400/60">
+                  className="w-20 h-20 border rounded-full"
+                  style={{ borderColor: 'var(--line)', borderTopColor: 'var(--accent)' }} />
+                <div className="absolute inset-0 grid place-items-center font-mono text-[11px] text-[color:var(--t2)]">
                   SCAN
                 </div>
               </div>
-              <div className="mt-6 hud-value text-sm text-cyan-400/60">Scanning {target}...</div>
-              <div className="mt-2 hud-text text-[9px] text-cyan-400/70">{currentPhase}</div>
+              <div className="mt-6 font-mono text-[13px] text-[color:var(--t1)]/80">Scanning {target}…</div>
+              <div className="mt-2 dialog-sub">{currentPhase}</div>
             </div>
           )}
 
@@ -296,20 +286,19 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
           {result && (
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               {/* Summary Bar */}
-              <div className="hud-panel rounded p-4">
+              <div className="metric-card">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <div className="hud-value text-sm text-cyan-100/70">{result.target}</div>
-                    <div className="hud-text text-[8px] text-cyan-400/65">
-                      {result.phases.length} PHASES · {result.summary.totalFindings} FINDINGS ·{' '}
+                    <div className="font-mono text-[13px] text-[color:var(--t1)]">{result.target}</div>
+                    <div className="dialog-sub mt-0.5">
+                      {result.phases.length} phases · {result.summary.totalFindings} findings ·{' '}
                       {result.endTime ? formatDuration(result.endTime - result.startTime) : '--'}
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => { setResult(null); setTarget(''); }}
-                      className="px-3 py-1.5 rounded border border-cyan-500/25 text-[9px] text-cyan-400/80 hover:text-cyan-400/90 transition-colors"
-                      style={{ fontFamily: 'Courier New, monospace' }}>
-                      NEW TARGET
+                      className="pill-btn text-[11px]">
+                      New target
                     </button>
                     <button
                       onClick={async () => {
@@ -348,7 +337,7 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                       }}
                       disabled={generatingReport}
                       className="px-3 py-1.5 rounded border border-emerald-500/20 text-[9px] text-emerald-400/60 hover:bg-emerald-500/5 disabled:opacity-30 transition-all"
-                      style={{ fontFamily: 'Courier New, monospace' }}>
+                     >
                       {generatingReport ? 'GENERATING...' : 'GENERATE & DOWNLOAD'}
                     </button>
                   </div>
@@ -360,7 +349,7 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                     <button key={sev} onClick={() => setFilter(filter === sev ? 'all' : sev)}
                       className={`px-2.5 py-1 rounded border text-[9px] transition-all ${
                         filter === sev ? `${SEVERITY_CLASSES[sev]}` : `${SEVERITY_CLASSES[sev]} opacity-50 hover:opacity-100`
-                      }`} style={{ fontFamily: 'Courier New, monospace' }}>
+                      }`}>
                       <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${SEVERITY_DOTS[sev]}`} />
                       {count} {sev.toUpperCase()}
                     </button>
@@ -376,9 +365,9 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                       phase.status === 'complete' ? 'border-emerald-500/15' :
                       phase.status === 'error' ? 'border-red-500/15' : ''
                     }`}>
-                    <div className="hud-text text-[8px] text-cyan-400/65 mb-1">{PHASE_LABELS[phase.id] || phase.id.toUpperCase()}</div>
-                    <div className="hud-text text-[8px] text-cyan-400/80 leading-tight">{phase.name}</div>
-                    <div className="hud-text text-[7px] text-cyan-400/45 mt-1">
+                    <div className="hud-text text-[8px] text-[color:var(--t2)]/65 mb-1">{PHASE_LABELS[phase.id] || phase.id.toUpperCase()}</div>
+                    <div className="hud-text text-[8px] text-[color:var(--t2)]/80 leading-tight">{phase.name}</div>
+                    <div className="hud-text text-[7px] text-[color:var(--t3)] mt-1">
                       {phase.results.length} FINDS
                       {phase.duration ? ` · ${formatDuration(phase.duration)}` : ''}
                     </div>
@@ -395,11 +384,11 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
               {/* Technologies */}
               {result.summary.technologies.length > 0 && (
                 <div className="hud-panel rounded p-3">
-                  <div className="hud-text text-cyan-400/65 mb-2">TECHNOLOGIES DETECTED</div>
+                  <div className="hud-text text-[color:var(--t2)]/65 mb-2">TECHNOLOGIES DETECTED</div>
                   <div className="flex flex-wrap gap-1.5">
                     {result.summary.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-0.5 border border-cyan-500/25 text-[9px] text-cyan-400/50"
-                        style={{ fontFamily: 'Courier New, monospace' }}>
+                      <span key={i} className="px-2 py-0.5 border border-white/15 text-[9px] text-[color:var(--t3)]"
+                       >
                         {tech}
                       </span>
                     ))}
@@ -410,9 +399,9 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
               {/* Findings List */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <div className="hud-text text-cyan-400/65">FINDINGS ({filteredFindings.length})</div>
+                  <div className="hud-text text-[color:var(--t2)]/65">FINDINGS ({filteredFindings.length})</div>
                   {filter !== 'all' && (
-                    <button onClick={() => setFilter('all')} className="hud-text text-[8px] text-cyan-400/70 hover:text-cyan-400/90 transition-colors">
+                    <button onClick={() => setFilter('all')} className="hud-text text-[8px] text-[color:var(--t2)] hover:text-[color:var(--t2)]/90 transition-colors">
                       CLEAR FILTER
                     </button>
                   )}
@@ -420,30 +409,30 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                 {filteredFindings.map((finding, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    className={`border rounded p-3 cursor-pointer transition-all hover:bg-cyan-500/[0.02] ${
+                    className={`border rounded p-3 cursor-pointer transition-all hover:bg-white/[0.02] ${
                       SEVERITY_CLASSES[finding.severity]
-                    } ${expandedFinding === i ? 'ring-1 ring-cyan-500/10' : ''}`}
+                    } ${expandedFinding === i ? 'ring-1 ring-white/10' : ''}`}
                     onClick={() => setExpandedFinding(expandedFinding === i ? null : i)}>
                     <div className="flex items-center gap-2">
                       <div className={`w-1.5 h-1.5 rounded-full ${SEVERITY_DOTS[finding.severity]}`} />
-                      <span className="hud-text text-[8px] text-cyan-400/65">{finding.type.toUpperCase()}</span>
-                      <span className="hud-value text-[11px] text-cyan-100/70 flex-1">{finding.title}</span>
+                      <span className="hud-text text-[8px] text-[color:var(--t2)]/65">{finding.type.toUpperCase()}</span>
+                      <span className="hud-value text-[11px] text-[color:var(--t1)] flex-1">{finding.title}</span>
                       <span className="hud-text text-[8px]">{finding.severity.toUpperCase()}</span>
                     </div>
                     {expandedFinding === i && (
                       <div className="mt-2 ml-4 space-y-1">
-                        <div className="text-[10px] text-slate-400/60" style={{ fontFamily: 'Courier New, monospace' }}>
+                        <div className="text-[10px] text-[color:var(--t2)]">
                           {finding.detail}
                         </div>
                         {finding.evidence && (
-                          <div className="text-[9px] text-cyan-400/70 bg-cyan-500/[0.02] rounded px-2 py-1 border border-cyan-500/5"
-                            style={{ fontFamily: 'Courier New, monospace' }}>
+                          <div className="text-[9px] text-[color:var(--t2)] bg-white/[0.02] rounded px-2 py-1 border border-white/10"
+                           >
                             {finding.evidence}
                           </div>
                         )}
                         {finding.command && (
                           <div className="text-[9px] text-emerald-400/50 bg-emerald-500/[0.03] rounded px-2 py-1 border border-emerald-500/10"
-                            style={{ fontFamily: 'Courier New, monospace' }}>
+                           >
                             $ {finding.command}
                           </div>
                         )}
@@ -452,7 +441,7 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                   </motion.div>
                 ))}
                 {filteredFindings.length === 0 && (
-                  <div className="text-center text-cyan-400/45 text-[10px] py-8" style={{ fontFamily: 'Courier New, monospace' }}>
+                  <div className="text-center text-[color:var(--t3)] text-[10px] py-8">
                     NO FINDINGS MATCH THIS FILTER
                   </div>
                 )}
@@ -460,9 +449,9 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
 
               {/* Commands */}
               <div className="hud-panel rounded p-3">
-                <div className="hud-text text-cyan-400/65 mb-2">COMMANDS EXECUTED</div>
-                <div className="space-y-0.5 text-[9px] text-cyan-400/60 max-h-32 overflow-y-auto"
-                  style={{ fontFamily: 'Courier New, monospace' }}>
+                <div className="hud-text text-[color:var(--t2)]/65 mb-2">COMMANDS EXECUTED</div>
+                <div className="space-y-0.5 text-[9px] text-[color:var(--t2)] max-h-32 overflow-y-auto"
+                 >
                   {result.phases.flatMap(p => p.commands).map((cmd, i) => (
                     <div key={i} className="flex items-center gap-1">
                       <span className="text-emerald-500/30">$</span>
@@ -479,18 +468,18 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <div>
                       <div className="hud-text text-emerald-400/40">BUG BOUNTY REPORTS ({reportResult.totalReports} FINDINGS)</div>
-                      <div className="hud-text text-[8px] text-cyan-400/45">Reports downloaded to your Downloads folder</div>
+                      <div className="hud-text text-[8px] text-[color:var(--t3)]">Reports downloaded to your Downloads folder</div>
                     </div>
                   </div>
                   <div className="space-y-3">
                     {reportResult.reports.map((report: any) => (
-                      <details key={report.id} className="border border-cyan-500/5 rounded group">
-                        <summary className="px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-cyan-500/[0.02]">
+                      <details key={report.id} className="border border-white/10 rounded group">
+                        <summary className="px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-white/[0.02]">
                           <span className={`w-1.5 h-1.5 rounded-full ${SEVERITY_DOTS[report.severity]}`} />
-                          <span className="hud-value text-[11px] text-cyan-100/60 flex-1">{report.title}</span>
-                          <span className="hud-text text-[8px] text-cyan-400/65">CVSS {report.cvssScore}</span>
+                          <span className="hud-value text-[11px] text-[color:var(--t2)] flex-1">{report.title}</span>
+                          <span className="hud-text text-[8px] text-[color:var(--t2)]/65">CVSS {report.cvssScore}</span>
                         </summary>
-                        <div className="px-3 pb-3 text-[10px] text-cyan-400/70 whitespace-pre-wrap" style={{ fontFamily: 'Courier New, monospace' }}>
+                        <div className="px-3 pb-3 text-[10px] text-[color:var(--t2)] whitespace-pre-wrap">
                           {report.plainText}
                         </div>
                       </details>
@@ -505,7 +494,7 @@ export default function AutoRecon({ isOpen, onClose }: AutoReconProps) {
           {error && (
             <div className="px-6 pb-4">
               <div className="border border-red-500/20 bg-red-500/5 rounded px-4 py-3 text-[11px] text-red-400/70"
-                style={{ fontFamily: 'Courier New, monospace' }}>
+               >
                 {error}
               </div>
             </div>

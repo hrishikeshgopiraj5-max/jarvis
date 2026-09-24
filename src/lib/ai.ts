@@ -14,20 +14,26 @@ export interface ChatResponse {
   confidence?: number;
 }
 
-export async function sendChatMessage(message: string, conversation: Message[]): Promise<ChatResponse> {
-  try {
-    // Get API key from settings (client-side storage)
-    const settings = getSettings();
-    const apiKey = settings.openrouterApiKey || '';
+export interface ChatOptions {
+  /** Force a mesh strategy (single/dual/triple) — from the Astra mode selector. */
+  strategy?: 'single' | 'dual' | 'triple';
+  /** Force a specific mesh model id for the primary call. */
+  model?: string;
+}
 
+export async function sendChatMessage(message: string, conversation: Message[], opts?: ChatOptions): Promise<ChatResponse> {
+  try {
+    // API key lives server-side only — never sent from the client.
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
         conversation: conversation.slice(-20),
-        apiKey,
+        strategy: opts?.strategy,
+        model: opts?.model,
       }),
+      signal: AbortSignal.timeout(45000),
     });
     const data = await res.json();
     return data;

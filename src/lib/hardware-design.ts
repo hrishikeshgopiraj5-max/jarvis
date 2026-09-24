@@ -778,7 +778,7 @@ export function generateWiringSVG(diagram: WiringDiagram): string {
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background:#0a0e14;font-family:monospace">`;
 
   // Title
-  svg += `<text x="${width/2}" y="30" text-anchor="middle" fill="#06b6d4" font-size="14" font-weight="bold">${diagram.title}</text>`;
+  svg += `<text x="${width/2}" y="30" text-anchor="middle" fill="#d4a574" font-size="14" font-weight="bold">${diagram.title}</text>`;
 
   // Position components in a grid
   const cols = Math.ceil(Math.sqrt(diagram.components.length));
@@ -816,12 +816,12 @@ export function generateWiringSVG(diagram: WiringDiagram): string {
     const pos = positions[i];
 
     const categoryColors: Record<string, string> = {
-      microcontroller: '#06b6d4',
+      microcontroller: '#d4a574',
       sensor: '#22c55e',
       actuator: '#f97316',
       power: '#ef4444',
       communication: '#a855f7',
-      display: '#3b82f6',
+      display: '#a8a29e',
       passive: '#6b7280',
     };
 

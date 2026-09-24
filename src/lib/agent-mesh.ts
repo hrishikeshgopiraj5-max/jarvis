@@ -319,6 +319,7 @@ const INTENT_PATTERNS: Record<AgentIntent, RegExp[]> = {
     /\b(hello|hi|hey|thanks|thank you|ok|okay|yes|no|sure|got it|cool|nice)\b/i,
     /\b(what time|what date|what day|current time|current date)\b/i,
   ],
+  general: [],
 };
 
 export function classifyIntent(text: string): AgentIntent {
@@ -499,6 +500,8 @@ export interface MeshRequest {
   message: string;
   conversation: { role: string; content: string }[];
   modelOverride?: string;
+  /** Force a strategy regardless of the intent router (Astra mode pin). */
+  strategyOverride?: 'single' | 'dual' | 'triple';
   /** Enable RAG knowledge augmentation */
   useKnowledge?: boolean;
   /** Enable memory context */
@@ -521,7 +524,10 @@ export interface MeshResponse {
  * Execute a query through the full spider-web mesh with RAG + Memory.
  */
 export async function executeMeshQuery(req: MeshRequest): Promise<MeshResponse> {
-  const selection = routeThroughMesh(req.message, req.conversation.length);
+  let selection = routeThroughMesh(req.message, req.conversation.length);
+  if (req.strategyOverride) {
+    selection = { ...selection, strategy: req.strategyOverride };
+  }
   const modelsUsed: string[] = [];
 
   const modelId = req.modelOverride || selection.primary.id;

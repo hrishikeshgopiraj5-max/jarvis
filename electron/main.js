@@ -45,7 +45,7 @@ function createWindow() {
     frame: false,
     transparent: false,
     backgroundColor: '#080c14',
-    icon: path.join(__dirname, 'icon.png'),
+    icon: path.join(__dirname, 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -89,7 +89,7 @@ function createWindow() {
   });
 
   // ── System Tray ──────────────────────────────────────────────
-  tray = new Tray(path.join(__dirname, 'icon.png'));
+  tray = new Tray(path.join(__dirname, 'icon.ico'));
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show JARVIS', click: () => mainWindow.show() },
     { type: 'separator' },
@@ -115,6 +115,8 @@ function createWindow() {
 }
 
 // ── App Lifecycle ──────────────────────────────────────────────
+app.setName('JARVIS');
+
 app.whenReady().then(async () => {
   await startNextServer();
   createWindow();

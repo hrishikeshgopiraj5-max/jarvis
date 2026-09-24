@@ -1,17 +1,14 @@
 @echo off
-title J.A.R.V.I.S. — Starting...
-cd /d "%~dp0\.."
+title J.A.R.V.I.S.
+cd /d "%~dp0.."
 
-:: Check if bun is installed
-if not exist "%USERPROFILE%\.bun\bin\bun.exe" (
-    echo Installing bun...
-    powershell -NoProfile -Command "irm bun.sh/install.ps1 | iex"
-)
-
-:: Install dependencies if needed
-if not exist "node_modules\electron" (
-    echo Installing Electron...
-    "%USERPROFILE%\.bun\bin\bun.exe" add electron --dev
+:: Skip install checks — everything should already be installed
+:: If electron is missing, auto-install then launch
+if not exist "node_modules\electron\package.json" (
+    title J.A.R.V.I.S. — First-time setup...
+    echo [JARVIS] First time setup — installing dependencies...
+    "%USERPROFILE%\.bun\bin\bun.exe" install
+    echo [JARVIS] Setup complete. Launching...
 )
 
 :: Start the desktop app

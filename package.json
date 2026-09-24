@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "bun test src/lib/__tests__/",
     "desktop": "bun run electron ./electron/main.js",
     "desktop:install": "bun add electron --dev && bun run desktop",
     "shortcut": "powershell -ExecutionPolicy Bypass -File ./electron/create-shortcut.ps1"
