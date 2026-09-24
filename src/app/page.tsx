@@ -193,6 +193,14 @@ function JarvisShell() {
         </div>
       </header>
 
+      <nav className="jarvis-mobile-dock" aria-label="JARVIS modules">
+        <button onClick={() => setComputerOpen(true)}>COMPUTER</button>
+        <button onClick={() => setReconOpen(true)}>RECON</button>
+        <button onClick={() => setStudioOpen(true)}>BUILD</button>
+        <button onClick={() => setMemoryOpen(true)}>MEMORY</button>
+        <button onClick={() => setLogOpen(true)}>LOG</button>
+      </nav>
+
       {/* Error toast */}
       <AnimatePresence>
         {error != null && (

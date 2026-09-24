@@ -1264,6 +1264,7 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
   border-bottom: 1px solid rgba(255,255,255,.07);
   background: linear-gradient(180deg, rgba(7,8,10,.74), rgba(7,8,10,.22));
 }
+.jarvis-mobile-dock { display: none; }
 .jarvis-shell .hud-brand {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1312,6 +1313,10 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
   .jarvis-shell .hud-center { padding-top: 8px; }
 }
 @media (max-width: 720px) {
+  .jarvis-mobile-dock { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px 2px; overflow-x: auto; scrollbar-width: none; }
+  .jarvis-mobile-dock::-webkit-scrollbar { display: none; }
+  .jarvis-mobile-dock button { flex: 0 0 auto; min-height: 28px; padding: 0 9px; border: 1px solid rgba(255,255,255,.10); border-radius: 999px; background: rgba(255,255,255,.025); color: rgba(255,255,255,.46); font: 700 8px/1 var(--font-mono); letter-spacing: .12em; transition: color .2s ease, border-color .2s ease, background .2s ease; }
+  .jarvis-mobile-dock button:hover, .jarvis-mobile-dock button:focus-visible { color: var(--t1); border-color: var(--accent-line); background: var(--accent-soft); outline: none; }
   .jarvis-shell .hud-stage { grid-template-columns: 1fr; gap: 0; padding: 0 14px; }
   .jarvis-shell .hud-wing { display: none; }
   .jarvis-shell .hud-top { padding-inline: 16px; }
