@@ -1338,3 +1338,95 @@ button.hud-panel:hover, a.hud-panel:hover { background: var(--bg-raised-2); bord
   .jarvis-shell::before { display: none; }
   .jarvis-shell .hud-module:hover { transform: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   JARVIS FRONTEND SYSTEM — shared product language
+   Graphite / warm white / signal amber. Motion is state-led,
+   not decorative: panels enter, data breathes, controls respond.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --jarvis-graphite: #090b0f;
+  --jarvis-surface: rgba(19, 22, 27, .88);
+  --jarvis-surface-raised: rgba(28, 32, 39, .92);
+  --jarvis-border: rgba(255, 246, 232, .13);
+  --jarvis-border-strong: rgba(255, 145, 86, .34);
+  --jarvis-amber: #ff8b55;
+  --jarvis-amber-soft: rgba(255, 139, 85, .12);
+  --jarvis-cyan: #75d9d1;
+  --jarvis-violet: #b7a7f6;
+}
+
+.jarvis-shell {
+  color: #f1eee7;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 116, 64, .075), transparent 28%),
+    radial-gradient(circle at 18% 82%, rgba(117, 217, 209, .045), transparent 27%),
+    var(--jarvis-graphite) !important;
+}
+.jarvis-shell button, .jarvis-shell input, .jarvis-shell textarea, .jarvis-shell select { font-family: inherit; }
+.jarvis-shell button:focus-visible, .jarvis-shell input:focus-visible, .jarvis-shell textarea:focus-visible, .jarvis-shell select:focus-visible {
+  outline: 2px solid var(--jarvis-amber);
+  outline-offset: 3px;
+}
+.jarvis-shell .hud-module {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--jarvis-border);
+  background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+}
+.jarvis-shell .hud-module::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.055) 50%, transparent 75%);
+  transform: translateX(-120%);
+  transition: transform .7s cubic-bezier(.22,1,.36,1);
+}
+.jarvis-shell .hud-module:hover::after { transform: translateX(120%); }
+.jarvis-shell .hud-reticle { filter: drop-shadow(0 0 24px rgba(255, 112, 56, .12)); }
+.jarvis-shell .hud-reticle-svg { animation: jarvis-orbit 26s linear infinite; transform-origin: 50% 50%; }
+.jarvis-shell .hud-reticle[data-busy="true"] .hud-reticle-svg { animation-duration: 8s; }
+.jarvis-shell .wave-bar { border-radius: 99px; transition: height .12s ease, background .25s ease; }
+
+/* All feature windows share one surface regardless of which module opened them. */
+.jarvis-shell [role="dialog"], .jarvis-shell [role="alertdialog"] { backdrop-filter: blur(18px); }
+.jarvis-shell [role="dialog"] > div:not([role="dialog"]), .jarvis-shell [role="alertdialog"] > div:not([role="dialog"]) {
+  border: 1px solid var(--jarvis-border) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(155deg, rgba(27,31,38,.97), rgba(10,12,16,.97)) !important;
+  box-shadow: 0 32px 100px rgba(0,0,0,.48), 0 0 0 1px rgba(255,255,255,.025) inset !important;
+}
+.jarvis-shell [role="dialog"] h1, .jarvis-shell [role="dialog"] h2, .jarvis-shell [role="dialog"] h3,
+.jarvis-shell [role="alertdialog"] h1, .jarvis-shell [role="alertdialog"] h2, .jarvis-shell [role="alertdialog"] h3 {
+  letter-spacing: -.025em;
+}
+.jarvis-shell [role="dialog"] button, .jarvis-shell [role="alertdialog"] button { transition: transform .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease; }
+.jarvis-shell [role="dialog"] button:hover, .jarvis-shell [role="alertdialog"] button:hover { transform: translateY(-1px); }
+.jarvis-shell [role="dialog"] canvas { border-radius: 14px; background: radial-gradient(circle at 50% 42%, rgba(255,139,85,.10), transparent 42%), #0c0f13 !important; }
+.jarvis-shell [role="dialog"] table tr { border-color: rgba(255,255,255,.07); }
+.jarvis-shell [role="dialog"] input, .jarvis-shell [role="dialog"] textarea, .jarvis-shell [role="dialog"] select {
+  border-color: rgba(255,255,255,.12) !important;
+  background: rgba(0,0,0,.24) !important;
+  color: #f1eee7 !important;
+}
+.jarvis-shell [role="dialog"] input::placeholder, .jarvis-shell [role="dialog"] textarea::placeholder { color: rgba(255,255,255,.28); }
+.jarvis-shell .hud-panel2 { background: linear-gradient(155deg, rgba(27,31,38,.72), rgba(9,11,15,.48)); }
+.jarvis-shell .hud-model-tag { border-color: rgba(255,139,85,.22); background: rgba(255,139,85,.08); color: #ffc0a1; }
+
+@keyframes jarvis-orbit { to { transform: rotate(360deg); } }
+@keyframes jarvis-scanline { from { transform: translateY(-110%); } to { transform: translateY(110%); } }
+
+@media (max-width: 720px) {
+  .jarvis-shell [role="dialog"] > div:not([role="dialog"]), .jarvis-shell [role="alertdialog"] > div:not([role="dialog"]) {
+    width: 100% !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 16px !important;
+  }
+  .jarvis-shell [role="dialog"] canvas { min-height: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jarvis-shell .hud-reticle-svg { animation: none; }
+  .jarvis-shell .hud-module::after { display: none; }
+  .jarvis-shell [role="dialog"] button, .jarvis-shell [role="alertdialog"] button { transition: none; }
+}
